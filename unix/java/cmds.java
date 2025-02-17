@@ -20,9 +20,10 @@ public class cmds {
     public static void main(String... args) {
         commands.put("cat", cmds::cat);
         commands.put("ls", cmds::ls);
+        commands.put("grep", cmds::grep);
 
         if (args.length < 2) {
-            System.err.println("Command invalid.");
+            System.err.println("Usage: cmd <command> [arguments]");
         }
 
         var command = args[0];
@@ -66,6 +67,7 @@ public class cmds {
         var splittedArg = arg.split(" ");
         String dir;
         String subcommand = null;
+
         if (splittedArg.length == 2) {
             subcommand = splittedArg[0];
             dir = splittedArg[1];
@@ -89,6 +91,30 @@ public class cmds {
             }
         } catch (IOException e) {
             System.err.println(e.getMessage());
+        }
+    }
+
+    static void grep(String arg) {
+        try {
+            var splittedArg = arg.split(" ");
+            if (splittedArg.length < 2) {
+                throw new RuntimeException("missing word or filename");
+            }
+
+            String word = splittedArg[0];
+            String filename = splittedArg[1];
+
+            Path cwd = Paths.get(System.getProperty("user.dir"));
+            Path path = cwd.resolve(filename).normalize(); // not checking
+
+            var lines = Files.readAllLines(path);
+            for (var line : lines) {
+                if (line.contains(word)) {
+                    System.out.println(line);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
