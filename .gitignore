@@ -52,9 +52,10 @@ profiles.clj
 .idea/
 *.iml
 .vscode
-.lsp/*
-.clj-kondo/*
-.calva/*
+.lsp/
+.clj-kondo/
+.calva/
+
 
 /.shadow-cljs/
 node_modules/
