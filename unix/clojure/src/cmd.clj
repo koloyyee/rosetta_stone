@@ -31,9 +31,42 @@
       (println "file doesn't exist." (.getAbsolutePath file)))))
 
 
+(defn tail
+  "tail n lines file"
+  [args]
+  (print (second args) (first args))
+  (let [args-count (count args)
+        filename (if (>=  args-count  2) (second args) (first args))
+        n-lines (if (>= args-count 2) (Integer/parseInt (first args)) 5)
+        file (io/file filename)]
+    (if (.exists file)
+      (->> file
+           slurp
+           (str/split-lines)
+           (take-last n-lines)
+           (run! println))
+      (println "File" filename "doesn't exists."))))
 
+(defn sort-lines
+  "sort [-r] filename
+ -r for reverse sort"
+  [args]
+  ; get all the lines, create a new ordered seq
+  (let [[flag filename] (if (> (count args) 1)
+                          [(first args) (second args)]
+                          [nil (first args)])
+        file (io/file filename)]
+    (if (.exists file)
+      (let [lines (str/split-lines (slurp file))
+            sorted-lines (cond
+                           (= flag "-r") (sort #(compare %2 %1) lines)
+                           :else
+                           (sort lines))]
+        (doseq [line sorted-lines]
+          (println line)))
+      (println "File" filename "doesn't exist."))))
 
-(def cmds {:cat read-content :ls list-dir :grep grep-word})
+(def cmds {:cat read-content :ls list-dir :grep grep-word :tail tail :sort sort-lines})
 
 (defn -main [& args]
   (let [cmd-name (first args)
@@ -43,11 +76,14 @@
       ;; grep command (grep word file)
       (and (= cmd-key :grep) (>= (count args) 3))
       (cmd (second args) (last args))
-
       ;; ls -a command (ls -a directory)
       (and (= cmd-key :ls) (>= (count args) 3))
       (cmd (nth args 2) (second args))
 
+      (= cmd-key :tail)
+      (tail (rest args))
+      (= cmd-key :sort)
+      (sort-lines (rest args))
       ;; ls command
       ;; cat command 
       (and cmd (second args) (< (count args) 3))
