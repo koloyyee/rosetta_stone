@@ -21,6 +21,8 @@ public class cmds {
         commands.put("cat", cmds::cat);
         commands.put("ls", cmds::ls);
         commands.put("grep", cmds::grep);
+        commands.put("less", cmds::less);
+        commands.put("head", cmds::head);
 
         if (args.length < 2) {
             System.err.println("Usage: cmd <command> [arguments]");
@@ -113,6 +115,63 @@ public class cmds {
                     System.out.println(line);
                 }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * arg - (subcommand) + filename less 10 cmd.java - last 10 lines of the
+     * file.
+     */
+    static void less(String arg) {
+        var splittedArg = arg.split(" ");
+        var linesCount = 5;
+        var filename = "";
+
+        if (splittedArg.length > 1) {
+            linesCount = Integer.parseInt(splittedArg[0]);
+            filename = splittedArg[1];
+        } else {
+            filename = splittedArg[0];
+        }
+
+        Path cwd = Paths.get(System.getProperty("user.dir"));
+        Path filePath = cwd.resolve(filename).normalize();
+        try {
+            var lines = Files.readAllLines(filePath.getFileName());
+            lines.subList(Math.max(0, lines.size() - linesCount), lines.size())
+            .forEach(System.out::println);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * head - head filename
+     * first n lines of the file
+     */
+    static void head(String arg) {
+
+        var splittedArg = arg.split(" ");
+        var linesCount = 5;
+        var filename = "";
+
+        if (splittedArg.length > 1) {
+            linesCount = Integer.parseInt(splittedArg[0]);
+            filename = splittedArg[1];
+        } else {
+            filename = splittedArg[0];
+        }
+
+        Path cwd = Paths.get(System.getProperty("user.dir"));
+        Path filePath = cwd.resolve(filename).normalize();
+        try {
+            var lines = Files.readAllLines(filePath.getFileName());
+            lines.subList( 0, linesCount)
+            .forEach(System.out::println);
+
         } catch (IOException e) {
             e.printStackTrace();
         }
