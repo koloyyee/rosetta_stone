@@ -5,10 +5,11 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringTokenizer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Basic unix commands without Picocli yet.
@@ -23,6 +24,7 @@ public class cmds {
         commands.put("grep", cmds::grep);
         commands.put("less", cmds::less);
         commands.put("head", cmds::head);
+        commands.put("wc", cmds::wc);
 
         if (args.length < 2) {
             System.err.println("Usage: cmd <command> [arguments]");
@@ -49,10 +51,9 @@ public class cmds {
     static void cat(String arg) {
 
         String[] splittedArg = arg.split(" ");
-
         String filename = splittedArg.length > 1 ? splittedArg[1] : arg;
 
-        Path dirPath = Paths.get(System.getProperty("user.dir"), filename);
+        Path dirPath = getFile(filename);
         if (Files.exists(dirPath)) {
 
             try {
@@ -77,10 +78,9 @@ public class cmds {
             dir = arg;
         }
 
-        Path cwd = Paths.get(System.getProperty("user.dir"));
-        Path targetPath = cwd.resolve(dir).normalize();
+        Path path = getFile(dir);
 
-        try (var fileStream = Files.list(targetPath)) {
+        try (var fileStream = Files.list(path)) {
             var dirContent = fileStream.toList();
             for (var content : dirContent) {
                 if (subcommand != null && subcommand.equals("-a")) {
@@ -106,8 +106,7 @@ public class cmds {
             String word = splittedArg[0];
             String filename = splittedArg[1];
 
-            Path cwd = Paths.get(System.getProperty("user.dir"));
-            Path path = cwd.resolve(filename).normalize(); // not checking
+            Path path = getFile(filename);
 
             var lines = Files.readAllLines(path);
             for (var line : lines) {
@@ -136,12 +135,12 @@ public class cmds {
             filename = splittedArg[0];
         }
 
-        Path cwd = Paths.get(System.getProperty("user.dir"));
-        Path filePath = cwd.resolve(filename).normalize();
+        Path filePath = getFile(filename);
+
         try {
             var lines = Files.readAllLines(filePath.getFileName());
             lines.subList(Math.max(0, lines.size() - linesCount), lines.size())
-            .forEach(System.out::println);
+                    .forEach(System.out::println);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -149,8 +148,7 @@ public class cmds {
     }
 
     /**
-     * head - head filename
-     * first n lines of the file
+     * head - head filename first n lines of the file
      */
     static void head(String arg) {
 
@@ -165,15 +163,60 @@ public class cmds {
             filename = splittedArg[0];
         }
 
-        Path cwd = Paths.get(System.getProperty("user.dir"));
-        Path filePath = cwd.resolve(filename).normalize();
+        Path filePath = getFile(filename);
         try {
             var lines = Files.readAllLines(filePath.getFileName());
-            lines.subList( 0, linesCount)
-            .forEach(System.out::println);
+            lines.subList(0, linesCount)
+                    .forEach(System.out::println);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    static void wc(String args) {
+        var filename = "";
+        var subcommand = "";
+        String[] splittedArgs = args.split(" ");
+
+        if (splittedArgs.length > 1) {
+            subcommand = splittedArgs[0];
+            filename = splittedArgs[1];
+        } else {
+            filename = splittedArgs[0];
+        }
+        Path path = getFile(filename);
+        if (Files.exists(path)) {
+            try {
+                var linesCount = Files.readAllLines(path).size();
+                var wordCount = new StringTokenizer(Files.readAllLines(path).stream().collect(Collectors.joining())).countTokens();
+                var byteCount = Files.size(path);
+
+                switch(subcommand) {
+                    case "-l" ->  {
+                        System.out.println("%d lines.".formatted(linesCount));
+                    }
+                    case "-w" ->  {
+                        System.out.println("%d words.".formatted(wordCount));
+                    }
+                    case "-b" ->  {
+                        System.out.println("%d bytes.".formatted(byteCount));
+                    }
+                    default -> {
+                        System.out.println("%d  %d  %d".formatted(linesCount, wordCount, byteCount));
+                    }
+                }
+
+            } catch (IOException e) {
+                System.err.println(e.getMessage());
+            }
+        }
+    }
+
+    private static Path getFile(String filename) {
+
+        Path cwd = Path.of(System.getProperty("user.dir"));
+        Path filePath = cwd.resolve(filename).normalize();
+        return filePath;
     }
 }

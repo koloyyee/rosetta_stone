@@ -1,42 +1,42 @@
 (ns cmd
-   (:require
-    [clojure.java.io :as io]
-    [clojure.string :as str]))
+  (:require
+   [clojure.java.io :as io]
+   [clojure.string :as str]))
 
 
- (defn read-content  "Display content of a file."
-   [filename]
-   (let [file (str (.getCanonicalPath (io/file "./src")) "/" filename)]
-     (if (.exists (io/file file))
-       (println (slurp file))
-       (println (str "File not found: " filename)))))
+(defn read-content  "Display content of a file."
+  [filename]
+  (let [file (str (.getCanonicalPath (io/file "./src")) "/" filename)]
+    (if (.exists (io/file file))
+      (println (slurp file))
+      (println (str "File not found: " filename)))))
 
- (defn list-dir "List current directories."
-   [dir & [subcommand]]
-   (let [directory (io/file (or dir "."))]
-     (doseq [folder (.listFiles directory)]
-       (let [item (.getName folder)]
-         (if (= subcommand "-a")
-           (println item)
-           (when-not (.startsWith item ".")
-             (println item)))))))
+(defn list-dir "List current directories."
+  [dir & [subcommand]]
+  (let [directory (io/file (or dir "."))]
+    (doseq [folder (.listFiles directory)]
+      (let [item (.getName folder)]
+        (if (= subcommand "-a")
+          (println item)
+          (when-not (.startsWith item ".")
+            (println item)))))))
 
 
- (defn grep-word "Grep the line with target string."
+(defn grep-word "Grep the line with target string."
   ;; [word filename]
-   [args]
-   (if (< (count args) 2)
-     (println "Usage: grep <word> <filename>")
-     (let [[word filename] [(first args) (second args)]
-           file (io/file  filename)]
-       (if (.exists  file)
+  [args]
+  (if (< (count args) 2)
+    (println "Usage: grep <word> <filename>")
+    (let [[word filename] [(first args) (second args)]
+          file (io/file  filename)]
+      (if (.exists  file)
          ;; (doseq [line (filter (fn [line] (str/includes? line word)) (str/split-lines (slurp file)))]
-         (->> file
-              slurp
-              str/split-lines
-              (filter #(str/includes? % word))
-              (run! println))
-         (println "file doesn't exist."  filename)))))
+        (->> file
+             slurp
+             str/split-lines
+             (filter #(str/includes? % word))
+             (run! println))
+        (println "file doesn't exist."  filename)))))
 
 
 (defn tail
