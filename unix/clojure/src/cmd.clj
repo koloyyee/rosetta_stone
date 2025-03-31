@@ -11,6 +11,7 @@
       (println (slurp file))
       (println (str "File not found: " filename)))))
 
+
 (defn list-dir "List current directories."
   [dir & [subcommand]]
   (let [directory (io/file (or dir "."))]
