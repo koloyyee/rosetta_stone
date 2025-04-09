@@ -4,6 +4,7 @@ import static java.lang.System.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class ElectionWinners {
 
@@ -13,17 +14,11 @@ public class ElectionWinners {
     find(votes, k);
   }
 
-  static int find(final int[] votes, final int k) {
-
-    List<Integer> winners = new ArrayList<>();
-
-    int winner = 0;
-    int secondup = 0;
-
-    for (int i = 1; i < votes.length; i++) {
-      if()
+  static int find(int[] votes, int k) {
+    int max = IntStream.of(votes).max().orElse(0);
+    if (k > 0) {
+      return (int) IntStream.of(votes).filter(n -> n > max - k).count();
     }
-    out.println(winners.size());
-    return 0;
+    return IntStream.of(votes).filter(n -> n == max).count() == 1 ? 1 : 0;
   }
 }
