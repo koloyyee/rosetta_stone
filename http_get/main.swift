@@ -1,6 +1,5 @@
 import Foundation
 
-
 func main() {
 
 	Task {
@@ -11,12 +10,16 @@ func main() {
 
 		do {
 			let (data, resp) = try await URLSession.shared.data(from: url)
-			print(resp);
-
-			if let json = try JSONSerialization.jsonObject(with: data) as? [String : Any] {
-				print("\(json)")
+			if let httpResponse = resp as? HTTPURLResponse {
+				print("Status: \(httpResponse.statusCode)")
 			}
-		} catch (let error ){
+			// if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+			// 	print("Body: \(json)")
+			// }
+			if let bodyString = String(data: data, encoding: .utf8) {
+				print("Body: \(bodyString)")
+			}
+		} catch (let error) {
 			print(error.localizedDescription)
 		}
 		exit(0)

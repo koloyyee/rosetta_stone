@@ -19,7 +19,7 @@ public class main {
                     .build()
                     .send(request,
                             HttpResponse.BodyHandlers.ofString());
-            System.out.println("Response: " + response.body());
+            System.out.println("Body: " + response.body());
             System.out.println("Status: " + response.statusCode());
         } catch (URISyntaxException e) {
             // TODO Auto-generated catch block

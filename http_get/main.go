@@ -22,7 +22,8 @@ func main() {
 	}
 
 	bodyString := string(bodyBytes)
-	fmt.Println("Response Body: ", bodyString)
+	fmt.Println("Status: ", resp.Status)
+	fmt.Println("Body: ", bodyString)
 }
 
 // to run -> go run main.go

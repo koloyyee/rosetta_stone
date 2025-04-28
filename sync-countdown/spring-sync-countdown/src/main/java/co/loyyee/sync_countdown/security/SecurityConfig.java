@@ -57,12 +57,12 @@ public class SecurityConfig {
         return http
                 // .csrf(AbstractHttpConfigurer::disable)
                 .csrf((csrf) -> csrf.ignoringRequestMatchers("/auth/token", "/h2-console/**"))
-								.cors(cors -> corsConfigurationSource())
+                // .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(Customizer.withDefaults())
                 .headers(headers -> headers.disable())
                 .authorizeHttpRequests(auth
                         -> auth
                         .requestMatchers("/h2-console/**").permitAll()
-                        // .requestMatchers("/auth/token").permitAll()
                         .anyRequest().authenticated()
                 )
                 // .formLogin(formLogin -> formLogin.loginPage("/login"))
@@ -94,17 +94,16 @@ public class SecurityConfig {
     // public JdbcUserDetailsManager jdbcUserDetailsManager(DataSource dataSource) {
     //     return new JdbcUserDetailsManager(dataSource);
     // }
-
     @Bean
     UserDetailsManager users(DataSource dataSource, PasswordEncoder passwordEncoder) {
         UserDetails user = User.builder()
                 .username("user")
-								.password(passwordEncoder.encode("password"))
+                .password(passwordEncoder.encode("password"))
                 .roles("USER")
                 .build();
         UserDetails admin = User.builder()
                 .username("admin")
-								.password(passwordEncoder.encode("password"))
+                .password(passwordEncoder.encode("password"))
                 .roles("USER", "ADMIN")
                 .build();
         JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
@@ -113,10 +112,10 @@ public class SecurityConfig {
         return users;
     }
 
-		@Bean
-		PasswordEncoder passwordEncoder() {
-			return new BCryptPasswordEncoder();
-		}
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     public JwtDecoder jwtDecoder() {
@@ -133,10 +132,10 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of( "http://localhost:4200", "http://localhost:5173"));
-				configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
-				configuration.setAllowCredentials(true);
+        configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:5173"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
