@@ -35,19 +35,19 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<ResultResponse<String>> createUser(@RequestBody NewUser newUser) {
+    public ResponseEntity<ResultResponse<Map<String, String>>> createUser(@RequestBody NewUser newUser) {
         try {
-
+            logger.info("{}", newUser);
             UserDetails user = User.builder()
-                    .username(newUser.email())
+                    .username(newUser.email().toLowerCase())
                     .password(newUser.password())
                     .authorities("ROLE_USER")
                     .build();
             userDetailsManager.createUser(user);
-            var result = new ResultResponse<>("Success: create new user", newUser.email(), true);
+            var result = new ResultResponse<>("Success: create new user", Map.of("username", user.getUsername()), true);
             return ResponseEntity.ok().body(result);
         } catch (Exception e) {
-            var result = new ResultResponse<String>("Failed: create new user", null, false);
+            var result = new ResultResponse<Map<String, String>>("Failed: create new user", null, false);
             return ResponseEntity.badRequest().body(result);
         }
     }

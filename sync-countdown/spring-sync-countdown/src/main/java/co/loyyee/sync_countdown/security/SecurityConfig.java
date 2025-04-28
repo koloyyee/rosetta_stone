@@ -56,13 +56,13 @@ public class SecurityConfig {
     public SecurityFilterChain sfc(HttpSecurity http) throws Exception {
         return http
                 // .csrf(AbstractHttpConfigurer::disable)
-                .csrf((csrf) -> csrf.ignoringRequestMatchers("/auth/token", "/h2-console/**"))
+                .csrf((csrf) -> csrf.ignoringRequestMatchers("/auth/token", "/auth/signup", "/h2-console/**"))
                 // .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .cors(Customizer.withDefaults())
                 .headers(headers -> headers.disable())
                 .authorizeHttpRequests(auth
                         -> auth
-                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/h2-console/**", "/auth/signup").permitAll()
                         .anyRequest().authenticated()
                 )
                 // .formLogin(formLogin -> formLogin.loginPage("/login"))
@@ -97,12 +97,12 @@ public class SecurityConfig {
     @Bean
     UserDetailsManager users(DataSource dataSource, PasswordEncoder passwordEncoder) {
         UserDetails user = User.builder()
-                .username("user")
+                .username("user@sync.room")
                 .password(passwordEncoder.encode("password"))
                 .roles("USER")
                 .build();
         UserDetails admin = User.builder()
-                .username("admin")
+                .username("admin@sync.room")
                 .password(passwordEncoder.encode("password"))
                 .roles("USER", "ADMIN")
                 .build();
@@ -129,6 +129,10 @@ public class SecurityConfig {
         return new NimbusJwtEncoder(jwks);
     }
 
+    /**
+     * This being used automagically with @Bean 
+     * @return
+     */
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
