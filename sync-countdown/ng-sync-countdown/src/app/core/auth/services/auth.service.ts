@@ -1,3 +1,5 @@
+import { ResultResponse } from '@/shared/models/result-response';
+import { logger } from '@/shared/utils/helper';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
@@ -23,23 +25,33 @@ export class AuthService {
     private readonly router: Router,
   ) { }
 
-  signup(email: string, password: string) {
+  signup(email: string, password: string): Observable<ResultResponse<{username: string} | null >> {
     const hashedPassword = bcrypt.hashSync(password, 10);
-    console.log(hashedPassword)
-    this.http.post("http://localhost:8080/auth/signup", {
-      username: email,
-      password: hashedPassword,
+    const headers = new HttpHeaders( {
+      "Skip" : "true"
     })
+    return this.http.post<ResultResponse<{username: string}>>("/auth/signup", {
+      email: email.toLowerCase(), // normalize email.
+      password: hashedPassword,
+    },{ headers})
+    .pipe(
+      map( resp => resp),
+      catchError( (err ) => {
+        logger(err, { level: "error"});
+        return throwError(() => err);
+      })
+    )
+
   }
 
   login(username: string, password: string): Observable<CurrentUser> {
 
-    const b64Cred = btoa(`${username}:${password}`);
+    const b64Cred = btoa(`${username.toLowerCase()}:${password}`);
     const headers = new HttpHeaders({
       'Authorization' : "Basic " + b64Cred,
-      'Skip-Interceptor': 'true' 
+      'Skip': 'true'
     })
-    return this.http.post<CurrentUser>("http://localhost:8080/auth/token", {}, {headers})
+    return this.http.post<CurrentUser>("/auth/token", {}, {headers})
     .pipe(
       map(resp => {
         this.setAuth(resp);
@@ -51,7 +63,7 @@ export class AuthService {
     }));
   }
 
-  
+
   logout() : void{
     this.purgeAuth();
     void this.router.navigate(["/"]);

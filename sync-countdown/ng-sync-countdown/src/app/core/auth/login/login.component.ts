@@ -1,12 +1,11 @@
 import { CurrentUser } from '@/shared/models/current-user';
-import { AsyncPipe, JsonPipe } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, AsyncPipe, JsonPipe],
+  imports: [ReactiveFormsModule],
   standalone: true,
   template: `
     <form
@@ -39,7 +38,7 @@ export class LoginComponent {
   errorMessage!: string | null;
 
   loginForm = new FormGroup({
-    username: new FormControl("", [Validators.required, Validators.maxLength(10)]),
+    username: new FormControl("", [Validators.required, Validators.email]),
     password: new FormControl("", Validators.required),
   })
 

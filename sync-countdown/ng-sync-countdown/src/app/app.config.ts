@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import { AuthGuard } from './core/auth/services/auth-guard.service';
-import { loggingInterceptor } from './core/interceptors/api.interceptor';
+import { loggingInterceptor, urlInterceptor } from './core/interceptors/api.interceptor';
 import { tokenInterceptor } from './core/interceptors/token.interceptor';
 
 export const appConfig: ApplicationConfig = {
@@ -12,7 +12,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, ),
     provideHttpClient(
-      withInterceptors([ loggingInterceptor, tokenInterceptor])
+      withInterceptors([ loggingInterceptor, tokenInterceptor, urlInterceptor])
     ),
     AuthGuard
   ],
