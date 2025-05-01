@@ -19,7 +19,7 @@ import co.loyyee.sync_countdown.rooms.TimerWebSocketController;
 import co.loyyee.sync_countdown.rooms.models.RoomStatus;
 
 /**
- *  Updating Timer
+ * Timer Business Logic
  */
 @Service
 public class TimerService {
@@ -137,7 +137,7 @@ public class TimerService {
 
 	public void resume(String roomId) {
 		roomStatuses.put(roomId, RoomStatus.RUNNING);
-		broadcastingPaused(roomId);
+		broadcastingResumed(roomId);
 	}
 
 	public void extend(String roomId, long additionalDuration) {
