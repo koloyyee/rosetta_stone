@@ -22,12 +22,15 @@ export const routes: Routes = [
         path: "",
         loadComponent: () => import("@/app/features/rooms/components/listing/listing.component").then(m => m.ListingComponent),
         title: "Rooms",
+
+        canActivate: [AuthGuard],
       },
       {
 
-        path: ":name",
+        path: ":id",
         loadComponent: () => import("@/app/features/rooms/components/room/room.component").then(m => m.RoomComponent),
         title: "Room",
+        canActivate: [AuthGuard],
       }
     ]
   }

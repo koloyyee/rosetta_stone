@@ -9,7 +9,7 @@ import { Room } from '../../models/room';
   template: `
 
   <div class="border border-slate-400 shadow rounded-2xl">
-    <a [routerLink] ="[ '/rooms', room.name ]" >
+    <a [routerLink] ="[ '/rooms', room.id]" >
    {{ room.name }}
    {{ room.startTime ? "occupied" : "empty"}}
 </a>

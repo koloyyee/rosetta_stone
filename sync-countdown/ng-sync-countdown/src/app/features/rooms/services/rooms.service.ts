@@ -13,7 +13,7 @@ export class RoomsService {
     return this.http.get<Room[]>("/rooms");
   }
 
-  findByName(roomName: string ) {
-    return this.http.get<Room | null >("/rooms/" + roomName);
+  findById(roomId: string ) {
+    return this.http.get<Room | null >("/rooms/" + roomId);
   }
 }
