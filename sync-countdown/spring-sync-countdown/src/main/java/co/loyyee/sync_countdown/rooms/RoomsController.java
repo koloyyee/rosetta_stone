@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,6 +48,14 @@ public class RoomsController {
     @PostMapping()
     public Room saveRoom(@RequestParam Room room) {
         return this.roomRepoImpl.save(room);
+    }
+
+
+    @MessageMapping("/timer/start")
+    @SendTo("/topic/timer")
+    public Action startTimer(Action action) {
+        System.out.println(action);
+        return action;
     }
 
     @PostMapping("{roomId}/start")

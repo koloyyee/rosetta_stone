@@ -1,4 +1,4 @@
-package co.loyyee.sync_countdown.security;
+package co.loyyee.sync_countdown.config;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -56,14 +56,15 @@ public class SecurityConfig {
     public SecurityFilterChain sfc(HttpSecurity http) throws Exception {
         return http
                 // .csrf(AbstractHttpConfigurer::disable)
-                .csrf((csrf) -> csrf.ignoringRequestMatchers("/auth/token", "/auth/signup", "/h2-console/**"))
+                .csrf((csrf) -> csrf.ignoringRequestMatchers("/auth/token", "/auth/signup", "/h2-console/**", "/portfolio", "/timer"))
                 // .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .cors(Customizer.withDefaults())
                 .headers(headers -> headers.disable())
                 .authorizeHttpRequests(auth
                         -> auth
-                        .requestMatchers("/h2-console/**", "/auth/signup").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/h2-console/**", "/auth/signup", "/portfolio", "/timer").permitAll()
+                        .anyRequest()
+                        .authenticated()
                 )
                 // .formLogin(formLogin -> formLogin.loginPage("/login"))
                 .httpBasic(Customizer.withDefaults())

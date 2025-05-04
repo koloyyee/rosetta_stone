@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import co.loyyee.sync_countdown.rooms.TimerWebSocketController;
 import co.loyyee.sync_countdown.rooms.models.RoomStatus;
 
 /**
@@ -26,15 +25,16 @@ public class TimerService {
 
 	private static final Logger logger = LoggerFactory.getLogger(TimerService.class);
 
-	private final TimerWebSocketController websocket;	
+	// private final TimerWebSocketController websocket;	
+	private final TimerHandler websocket;
 
 	private final Map<String, LocalDateTime> roomEndTimes = new ConcurrentHashMap<>();
 	private final Map<String, RoomStatus> roomStatuses = new ConcurrentHashMap<>();
 
 	private final ObjectMapper objectMapper;
 
-	public TimerService(TimerWebSocketController timerWebSocketController) {
-		this.websocket = timerWebSocketController;
+	public TimerService(TimerHandler timerHandler) {
+		this.websocket = timerHandler;
 		this.objectMapper = new ObjectMapper();
 		// NOTE: Jackson cannot convert LocalDateTime to Timestamp directly.
 		this.objectMapper.registerModule(new JavaTimeModule());
