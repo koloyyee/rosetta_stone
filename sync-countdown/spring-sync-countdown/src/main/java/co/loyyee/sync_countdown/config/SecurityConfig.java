@@ -97,6 +97,7 @@ public class SecurityConfig {
     // }
     @Bean
     UserDetailsManager users(DataSource dataSource, PasswordEncoder passwordEncoder) {
+        // default user
         UserDetails user = User.builder()
                 .username("user@sync.room")
                 .password(passwordEncoder.encode("password"))

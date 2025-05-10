@@ -7,4 +7,4 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table("ROOMS")
-public record Room(@Id UUID id, String name, LocalDateTime startTime,  LocalDateTime endTime, long duration, RoomStatus status) {}
+public record Room(@Id UUID id, String name, LocalDateTime startTime,  LocalDateTime endTime, boolean isTimerRunning) {}

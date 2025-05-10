@@ -1,185 +1,146 @@
 package co.loyyee.sync_countdown.rooms.services;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
-import co.loyyee.sync_countdown.rooms.models.RoomStatus;
-
-/**
- * Timer Business Logic
- */
 @Service
 public class TimerService {
 
-	private static final Logger logger = LoggerFactory.getLogger(TimerService.class);
+    private static final Logger logger = LoggerFactory.getLogger(TimerService.class);
+    private final SimpMessagingTemplate template;
+    private final Map<String, TimerData> timers = new ConcurrentHashMap<>();
 
-	// private final TimerWebSocketController websocket;	
-	private final TimerHandler websocket;
+    public TimerService(SimpMessagingTemplate template) {
+        this.template = template;
+    }
 
-	private final Map<String, LocalDateTime> roomEndTimes = new ConcurrentHashMap<>();
-	private final Map<String, RoomStatus> roomStatuses = new ConcurrentHashMap<>();
+    /**
+     * Start a timer.
+     */
+    public void start(String roomId, LocalDateTime startTime, long duration) {
+        this.timers.put(roomId, new TimerData(startTime, duration, TimerState.RUNNING));
+        sendRemainingTime(roomId);
+    }
 
-	private final ObjectMapper objectMapper;
+    public void pause(String roomId) {
+        var timer = timers.get(roomId);
+        if (timer != null) {
+            timer.state = TimerState.PAUSED;
+            var now = LocalDateTime.now(Clock.system(ZoneId.of("America/Toronto")));
+            timer.remaining = Duration.between(now, timer.startTime.plusSeconds(timer.duration)).getSeconds();
+        }
+        sendRemainingTime(roomId);
+    }
 
-	public TimerService(TimerHandler timerHandler) {
-		this.websocket = timerHandler;
-		this.objectMapper = new ObjectMapper();
-		// NOTE: Jackson cannot convert LocalDateTime to Timestamp directly.
-		this.objectMapper.registerModule(new JavaTimeModule());
-		this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-	}
-	/****** WebSocket Broadcasting functions  *******/
+    public void resume(String roomId) {
+        var timer = timers.get(roomId);
+        if (timer != null) {
+            // Note: create a new temp now for resetting the start time
+            var now = LocalDateTime.now(Clock.system(ZoneId.of("America/Toronto")));
+            var newStartTime = now.minusSeconds(timer.duration - timer.remaining);
+						timer.startTime = newStartTime;
+						timer.state = TimerState.RUNNING;
+        }
+				sendRemainingTime(roomId);
+    }
 
-	void broadcastingUpdate(String roomId, long remainingSeconds) {
-		try {
-			String messageJson = objectMapper.writeValueAsString(Map.of(
-				"type", TimerStatus.UPDATE.name(),
-				"roomId", roomId,
-				"remainingTime", remainingSeconds
-			));
-			websocket.broadcast(roomId, messageJson);	
-		} catch (JsonProcessingException e) {
-			logger.error("Failed to stringify message: {} ", roomId, TimerStatus.UPDATE.name(), e.getMessage());
-		}
-	}
+    public void stop(String roomId) {
+        var timer = timers.get(roomId);
+        if (timer != null) {
+            timer.state = TimerState.STOPPED;
+        }
+        sendRemainingTime(roomId);
+    }
 
-	void broadcastingStart(String roomId, LocalDateTime startTime, LocalDateTime endTime, long duration) {
-		try {
-			String messageJson = objectMapper.writeValueAsString(Map.of(
-			"type" , TimerStatus.STARTED.name() ,
-			"roomId", roomId,
-			"startTime", startTime,
-			"endTime", endTime,
-			"duration", duration
-			));
+    public void extend(String roomId, long duration) {
+        var timer = timers.get(roomId);
+        if (timer != null) {
+            timer.duration = duration;
+        }
+        sendRemainingTime(roomId);
+    }
 
-			websocket.broadcast(roomId, messageJson);
-		} catch (JsonProcessingException e) {
-			logger.error("Failed to stringify message: {} ", roomId, TimerStatus.STARTED.name(), e.getMessage());
-		}
-	}
-	
-	void broadcastingPaused(String roomId) {
-		try {
-			String messageJson = objectMapper.writeValueAsString(Map.of(
-				"type", TimerStatus.PAUSED.name(),
-				"roomId", roomId
-			));
-			websocket.broadcast(roomId, messageJson);
-		} catch (JsonProcessingException e) {
-			logger.error("Failed to stringify message: {} ", roomId, TimerStatus.PAUSED.name(), e.getMessage());
-		}
-	}
+    public void sendRemainingTime(String roomId) {
+        var timer = timers.get(roomId);
+        if (timer == null) {
+            template.convertAndSend("/topic/timer/" + roomId, "Timer not found for room: " + roomId);
+            return;
+        }
+        var startTime = timer.startTime;
+        var state = timer.state;
+        var duration = timer.duration;
 
-	void broadcastingResumed(String roomId) {
-		try {
-			String messageJson = objectMapper.writeValueAsString(Map.of(
-				"type", TimerStatus.RESUMED.name(),
-				"roomId", roomId
-			));
-			websocket.broadcast(roomId, messageJson);
-		} catch (JsonProcessingException e) {
-			logger.error("Failed to stringify message: {} ", roomId, TimerStatus.PAUSED.name(), e.getMessage());
-		}
-	}
+        var now = LocalDateTime.now(Clock.system(ZoneId.of("America/Toronto")));
 
-	void broadcastingExtended(String roomId, long additionalDuration ) {
-		try {
-			String messageJson = objectMapper.writeValueAsString(Map.of(
-				"type", TimerStatus.EXTENDED.name(),
-				"roomId", roomId,
-				"additional", additionalDuration
-			));
-			websocket.broadcast(roomId, messageJson);
-		} catch (JsonProcessingException e) {
-			logger.error("Failed to stringify message: {} ", roomId, TimerStatus.EXTENDED.name(), e.getMessage());
-		}
-	}
+        Map<String, Object> response = new HashMap<>();
+        response.put("remaining", 0L);
+        response.put("state", state.name());
 
-	void broadcastingFinished(String roomId) {
-		try {
-			String messageJson = objectMapper.writeValueAsString(Map.of(
-				"type", TimerStatus.FINISHED.name(),
-				"roomId", roomId
-			));
-			websocket.broadcast(roomId, messageJson);
-		} catch (JsonProcessingException e) {
-			logger.error("Failed to stringify message: {} ", roomId, TimerStatus.EXTENDED.name(), e.getMessage());
-		}
-	}
+        switch (state) {
+            case TimerState.RUNNING -> {
+                long remaining = Duration.between(now, startTime.plusSeconds(duration)).getSeconds();
+                logger.info("Remaining seconds :" + remaining);
+                if (remaining >= 0) {
+                    response.put("remaining", remaining);
+                    template.convertAndSend("/topic/timer/remaining/" + roomId, response);
+                } else {
+                    timer.state = TimerState.FINISHED;
+                    template.convertAndSend("/topic/timer/remaining/" + roomId, response);
+                }
+            }
+            case TimerState.FINISHED ->
+                template.convertAndSend("/topic/timer/remaining/" + roomId, response);
+            case TimerState.STOPPED ->
+                template.convertAndSend("/topic/timer/remaining/" + roomId, response);
+            case TimerState.PAUSED -> {
+                response.put("remaining", Math.max(0L, timer.remaining));
+                template.convertAndSend("/topic/timer/remaining/" + roomId, response);
+            }
+        }
 
-	/**
-	 * TODO: DOC
-	 */
-	public void start(String roomId, LocalDateTime startTime, long duration) {
-		LocalDateTime endTime = startTime.plusSeconds(duration);
-		roomEndTimes.put(roomId, endTime);
-		roomStatuses.put(roomId, RoomStatus.RUNNING);
-		broadcastingStart(roomId, startTime, endTime, duration);
-	}
+    }
 
-	public void pause(String roomId) {
-		roomStatuses.put(roomId, RoomStatus.PAUSED);
-		broadcastingPaused(roomId);
-	}
+    @Scheduled(fixedRate = 1000)
+    public void scheduleRemainingTime() {
+        for (var room : timers.entrySet()) {
+            var roomId = room.getKey();
+            sendRemainingTime(roomId);
+        }
+    }
 
-	public void resume(String roomId) {
-		roomStatuses.put(roomId, RoomStatus.RUNNING);
-		broadcastingResumed(roomId);
-	}
+    private static class TimerData {
 
-	public void extend(String roomId, long additionalDuration) {
-		if ( roomEndTimes.containsKey(roomId) && isRunning(roomId)) {
-				roomEndTimes.compute(roomId, (key, oldValue) -> oldValue.plusSeconds(additionalDuration));
-				broadcastingExtended(roomId, additionalDuration);
-		}
-	}
+        public TimerState state;
+        public long duration;
+        public long remaining;
+        LocalDateTime startTime;
 
-	public void initializeTimer() {
+        public TimerData(LocalDateTime startTime, long duration, TimerState state) {
+            this.startTime = startTime;
+            this.duration = duration;
+            this.state = state;
 
-	}
+            // var now = LocalDateTime.now(Clock.system(ZoneId.of("America/Toronto")));
+            // this.remaining = Duration.between(now, startTime.plusSeconds(duration)).getSeconds();
+        }
+    }
 
-	public boolean isRunning(String roomId) {
-		return roomStatuses.getOrDefault(roomId, RoomStatus.NOT_STARTED) == RoomStatus.RUNNING;
-	}
+    enum TimerState {
+        RUNNING,
+        PAUSED,
+        STOPPED,
+        FINISHED;
+    }
 
-	/**
-	 * TODO: DOC
-	 */
-	@Scheduled(fixedRate = 1000)
-	public void sendTimerUpdate() {
-		LocalDateTime now = LocalDateTime.now(java.time.Clock.system(java.time.ZoneId.of("America/Toronto")));
-		roomEndTimes.forEach(( roomId, endtime ) ->  {
-			if(isRunning(roomId)) {
-				long remainingSeconds = ChronoUnit.SECONDS.between(now, endtime);
-				if ( remainingSeconds > 0) {
-					broadcastingUpdate(roomId, remainingSeconds);
-				} else {
-					roomStatuses.put(roomId, RoomStatus.FINISHED);
-					broadcastingFinished(roomId);
-				}
-			}
-		});
-	}
-}	 
-
-enum TimerStatus {
-	UPDATE,
-	STARTED,
-	PAUSED,
-	RESUMED,
-	EXTENDED,
-	FINISHED;
 }

@@ -1,4 +1,4 @@
-package co.loyyee.sync_countdown.rooms.services;
+package co.loyyee.sync_countdown.non_stomp;
 
 import java.io.IOException;
 import java.util.Map;

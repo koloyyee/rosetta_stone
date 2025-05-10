@@ -1,4 +1,4 @@
-package co.loyyee.sync_countdown.rooms;
+package co.loyyee.sync_countdown.rooms.controllers;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
