@@ -1,4 +1,5 @@
 import { AuthService } from '@/app/core/auth/services/auth.service';
+import { HasRoleDirective } from '@/app/core/auth/services/has-role.directive';
 import { logger } from '@/shared/utils/helper';
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
@@ -13,14 +14,15 @@ import { WebSocketService } from '../../services/websocket.service';
 
 @Component({
   selector: 'app-room',
-  imports: [CommonModule, RouterModule, MatButtonModule],
+  imports: [CommonModule, RouterModule, MatButtonModule, HasRoleDirective],
   // templateUrl: './room.component.html',
   // styleUrl: './room.component.css',
   // styles: [`button { border: 2px block solid; padding: 3rem; }`],
   template: `
   <h1> Remaining Time {{ formattedTime }} </h1>
+  <div *hasRole="'ROLE_ADMIN'">
   @if(room)  {
-     @if(room.state === "STOPPED" ) {
+     @if(room.state === "STOPPED" || !room.state) {
        <button mat-flat-button class="bg-red-500" (click)="start()"> START</button>
      } @else if (room.state === "PAUSED") {
        <button  mat-flat-button (click)="resume()"> RESUME </button>
@@ -29,18 +31,21 @@ import { WebSocketService } from '../../services/websocket.service';
        <button  mat-flat-button (click)="stop()"> STOP</button>
      }
   }
+</div>
   <!-- <pre> {{ room | json  }} </pre> -->
   `,
 })
 export class RoomComponent implements OnInit, OnDestroy {
 
+
   room!: Room;
+
   webSocketSubject$!: WebSocketSubject<unknown>;
   rxStomp = new RxStomp();
   subscription!: Subscription;
   token: string | null;
   remainingTime: number;
-  formattedTime: string = "00:00:00";
+  formattedTime: string = "00:00";
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -76,6 +81,8 @@ export class RoomComponent implements OnInit, OnDestroy {
             const room = payload.body;
             this.room = room;
             this.requestRemaining();
+
+            logger('Connection complete');
           },
           error: err => logger('WebSocket error:' + err, { level: "error" }),
           complete: () => logger('WebSocket connection closed')

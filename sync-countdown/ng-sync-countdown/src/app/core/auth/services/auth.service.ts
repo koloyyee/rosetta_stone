@@ -18,6 +18,7 @@ export class AuthService {
   .pipe(distinctUntilChanged());
 
   public isAuthenticated = this.currentUser$.pipe(map(user  => !!user ));
+  public isAdmin = this.currentUser$.pipe(map( user => !!user?.authorities.some(a => a.authority === "ROLE_ADMIN")));
 
   constructor(
     private readonly http: HttpClient,

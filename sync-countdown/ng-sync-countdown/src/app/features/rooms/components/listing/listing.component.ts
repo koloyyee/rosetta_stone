@@ -1,6 +1,5 @@
 import { AuthService } from '@/app/core/auth/services/auth.service';
-import { CurrentUser } from '@/shared/models/current-user';
-import { CommonModule } from '@angular/common';
+import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -14,13 +13,14 @@ import { NewRoomDialogComponent } from './new-room-dialog/new-room-dialog.compon
 
 @Component({
   selector: 'app-listing',
-  imports: [CommonModule, RoomPreviewComponent, MatListModule, MatButtonModule, MatIconModule, MatDialogModule],
-  // templateUrl: './listing.component.html',
+  imports: [CommonModule, RoomPreviewComponent, MatListModule, MatButtonModule, MatIconModule, MatDialogModule, AsyncPipe],
   styleUrl: './listing.component.css',
   template: `
+  @if(isAdmin$ | async) {
   <button mat-fab (click)="openDialog()">
-          <mat-icon>add</mat-icon>
-        </button>
+      <mat-icon>add</mat-icon>
+  </button>
+  }
   <mat-list role="list">
   @for( room of rooms; track room.id) {
     <mat-list-item role="list-item">
@@ -33,18 +33,19 @@ import { NewRoomDialogComponent } from './new-room-dialog/new-room-dialog.compon
 export class ListingComponent implements OnInit {
 
   roomsService = inject(RoomsService);
-  currentUser$: Observable<CurrentUser | null> = inject(AuthService).currentUser$;
+  isAdmin$: Observable<boolean>= inject(AuthService).isAdmin;
+
   rooms: Room[] = [];
   readonly dialog = inject(MatDialog)
 
   constructor() {
-    this.currentUser$.subscribe(user => console.log(user));
+    console.log(this.isAdmin$)
   }
 
   openDialog() {
     const dialogRef = this.dialog.open(NewRoomDialogComponent);
     dialogRef.afterClosed().subscribe((newRoom: Room | undefined) => {
-      if(newRoom) {
+      if (newRoom) {
         this.rooms.push(newRoom);
       }
     });
