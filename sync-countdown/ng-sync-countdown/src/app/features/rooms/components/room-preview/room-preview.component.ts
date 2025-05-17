@@ -1,18 +1,18 @@
 import { Component, Input } from '@angular/core';
+import { MatListModule } from '@angular/material/list';
 import { RouterModule } from '@angular/router';
 import { Room } from '../../models/room';
 
 @Component({
   selector: 'app-room-preview',
-  imports: [RouterModule],
+  imports: [RouterModule, MatListModule],
   // templateUrl: './room-preview.component.html',
   template: `
-
-  <div class="border border-slate-400 shadow rounded-2xl">
+  <div>
     <a [routerLink] ="[ '/rooms', room.id]" >
-   {{ room.name }}
-   {{ room.startTime ? "occupied" : "empty"}}
-</a>
+    <span matListItemTitle>{{ room.name }}</span>
+    <span matListItemLine>{{ room.startTime ? "occupied" : "empty"}}</span>
+  </a>
   </div>
   `,
   styleUrl: './room-preview.component.css'

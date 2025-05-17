@@ -1,6 +1,8 @@
 import { AuthService } from '@/app/core/auth/services/auth.service';
-import { CommonModule, JsonPipe } from '@angular/common';
+import { logger } from '@/shared/utils/helper';
+import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RxStomp } from "@stomp/rx-stomp";
 import { Subscription } from 'rxjs';
@@ -11,17 +13,23 @@ import { WebSocketService } from '../../services/websocket.service';
 
 @Component({
   selector: 'app-room',
-  imports: [CommonModule, RouterModule, JsonPipe],
+  imports: [CommonModule, RouterModule, MatButtonModule],
   // templateUrl: './room.component.html',
   // styleUrl: './room.component.css',
-  styles: [`button { border: 2px block solid; padding: 3rem; }`],
+  // styles: [`button { border: 2px block solid; padding: 3rem; }`],
   template: `
   <h1> Remaining Time {{ formattedTime }} </h1>
-  <button (click)="start()"> START</button>
-  <button (click)="resume()"> RESUME </button>
-  <button (click)="pause()"> PAUSE </button>
-  <button (click)="requestRemaining()"> requestRemaining </button>
-  <pre> {{ room | json  }} </pre>
+  @if(room)  {
+     @if(room.state === "STOPPED" ) {
+       <button mat-flat-button class="bg-red-500" (click)="start()"> START</button>
+     } @else if (room.state === "PAUSED") {
+       <button  mat-flat-button (click)="resume()"> RESUME </button>
+     } @else if (room.state === "RUNNING") {
+       <button  mat-flat-button (click)="pause()"> PAUSE </button>
+       <button  mat-flat-button (click)="stop()"> STOP</button>
+     }
+  }
+  <!-- <pre> {{ room | json  }} </pre> -->
   `,
 })
 export class RoomComponent implements OnInit, OnDestroy {
@@ -58,20 +66,19 @@ export class RoomComponent implements OnInit, OnDestroy {
         },
       })
       this.rxStomp.activate();
-      console.log('Subscribing to topic: /topic/timer/remaining/' + this.room.id);
 
       this.subscription = this.rxStomp
         .watch({ destination: "/topic/timer/status/" + this.room.id })
         .subscribe({
           next: msg => {
-            console.log(msg)
             const payload = JSON.parse(msg.body);
+            logger(payload.body, { level: "info" });
             const room = payload.body;
             this.room = room;
             this.requestRemaining();
           },
-          error: err => console.error('WebSocket error:', err),
-          complete: () => console.log('WebSocket connection closed')
+          error: err => logger('WebSocket error:' + err, { level: "error" }),
+          complete: () => logger('WebSocket connection closed')
         });
 
       // Subscribe to Remaining Time
@@ -80,19 +87,15 @@ export class RoomComponent implements OnInit, OnDestroy {
         .subscribe({
           next: msg => {
             const payload = JSON.parse(msg.body);
-            console.log('Received message:', payload);
-            console.log({ payload })
             this.room.state = payload.state;
             this.remainingTime = payload.remaining;
             this.updateTimerDisplay();
           },
-          error: err => console.error('WebSocket error:', err),
-          complete: () => console.log('WebSocket connection closed')
+          error: err => logger('WebSocket error:' + err, { level: "error" }),
+          complete: () => logger('WebSocket connection closed')
         });
-      console.log('Subscription complete');
+      logger('Subscription complete');
     }
-    this.requestRemaining();
-    this.startLocalTimer();
 
   }
 
@@ -102,7 +105,7 @@ export class RoomComponent implements OnInit, OnDestroy {
       body: JSON.stringify({
         roomId: this.room.id,
         action: "start",
-        duration: 120,
+        duration: 121,
       })
     })
 
@@ -130,23 +133,35 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   }
 
+  stop() {
+    this.rxStomp.publish({
+      destination: `/app/timer.stopTimer/${this.room.id}`,
+      body: JSON.stringify({
+        roomId: this.room.id,
+        action: "stop",
+        duration: 121,
+      })
+    })
+    this.formattedTime = "00:00"
+  }
+
   requestRemaining() {
     this.rxStomp.publish({
       destination: `/app/timer.remainingTime/${this.room.id}`,
     })
   }
 
-updateTimerDisplay() {
-  // Calculate hours, minutes, seconds
-  const hours = Math.floor(this.remainingTime / 3600);
-  const minutes = Math.floor((this.remainingTime % 3600) / 60);
-  const seconds = this.remainingTime % 60;
+  updateTimerDisplay() {
+    // Calculate hours, minutes, seconds
+    const hours = Math.floor(this.remainingTime / 3600);
+    const minutes = Math.floor((this.remainingTime % 3600) / 60);
+    const seconds = this.remainingTime % 60;
 
-  // Format with leading zeros
-  this.formattedTime =
-    (hours > 0 ? `${hours}:` : '') +
-    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0').substring(0,2)}`;
-}
+    // Format with leading zeros
+    this.formattedTime =
+      (hours > 0 ? `${hours}:` : '') +
+      `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0').substring(0, 5)}`;
+  }
 
   localTimerInterval: any;
 
@@ -155,7 +170,6 @@ updateTimerDisplay() {
 
     this.localTimerInterval = setInterval(() => {
       if (this.room.state === "RUNNING" && this.remainingTime > 0) {
-        console.log(this.remainingTime)
         this.remainingTime -= 0.1;
         this.updateTimerDisplay();
       }
@@ -182,13 +196,10 @@ updateTimerDisplay() {
           if (room) {
             this.room = room;
             this.connect();
+            this.requestRemaining();
+            this.startLocalTimer();
           }
         },
-        error: (err) => {
-          if (err) {
-            this.router.navigate(["/"]);
-          }
-        }
       })
   }
 
@@ -196,7 +207,7 @@ updateTimerDisplay() {
     const roomId = this.route.snapshot.params["id"];
     this.webSocketService.disconnectFromRoom(roomId);
     (async () => {
-      console.log("disconnecting.");
+      logger("disconnecting.");
       await this.end()
     })();
   }

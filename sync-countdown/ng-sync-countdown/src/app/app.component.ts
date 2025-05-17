@@ -1,32 +1,53 @@
 import { CurrentUser } from '@/shared/models/current-user';
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AuthService } from './core/auth/services/auth.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterModule, CommonModule, AsyncPipe],
+  imports: [RouterModule, CommonModule, MatButtonModule, AsyncPipe],
   // templateUrl: './app.component.html',
   styleUrl: './app.component.css',
   template: `
   <main>
     <nav class="flex m-10">
       <section class="logo">
-        <a [routerLink]="['/']">Home </a>
+
+      <section class="nav-main mx-auto">
+        <a [routerLink]="['/']">
+          <button mat-raised-button>
+          Home
+          </button>
+        </a>
+      </section>
       </section>
 
       <section class="nav-main mx-auto">
-        <a [routerLink]="['/rooms']"> Rooms </a>
+        <a [routerLink]="['/rooms']">
+          <button mat-raised-button>
+            Rooms
+          </button>
+        </a>
       </section>
 
       <section class="nav-auth ml-auto flex gap-5">
         @if(currentUser$ | async ) {
-          <button (click)="logout()"> Logout </button>
+          <button mat-stroked-button (click)="logout()"> Logout </button>
         } @else {
-          <a [routerLink]="['/login']">Login</a>
-          <a [routerLink]="['/signup']">Sign Up</a>
+            <a [routerLink]="['/login']">
+              <button mat-raised-button>
+                Login
+              </button>
+            </a>
+
+          <a [routerLink]="['/signup']">
+					<button mat-raised-button>
+            Sign Up
+          </button>
+          </a>
         }
       </section>
 

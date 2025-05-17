@@ -1,11 +1,13 @@
 import { CurrentUser } from '@/shared/models/current-user';
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, MatInputModule, MatButtonModule],
   standalone: true,
   template: `
     <form
@@ -13,15 +15,24 @@ import { AuthService } from '../services/auth.service';
     [formGroup]="loginForm"
     (ngSubmit)="onSubmit()"
     >
+    <mat-form-field>
+      <mat-label>Email</mat-label>
       <input
+      matInput
       class="border border-amber-600 rounded-lg"
       type="email" formControlName="username">
-      <input
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Password</mat-label>
+      <input matInput
       class="border border-amber-600 rounded-lg"
       type="password" formControlName="password"
       >
-      <button class="border border-blue-400 rounded-lg px-3 py-1 hover:cursor-pointer"> Login </button>
-      <button type="reset" class="border border-pink-400 rounded-lg px-3 py-1 hover:cursor-pointer"> Clear </button>
+    </mat-form-field>
+
+      <button mat-raised-button class="border border-blue-400 rounded-lg px-3 py-1 hover:cursor-pointer"> Login </button>
+      <button mat-flat-button ="reset" class="border border-pink-400 rounded-lg px-3 py-1 hover:cursor-pointer"> Clear </button>
     @if(loginResult) {
       Welcome back! {{ loginResult.username }}
     }

@@ -3,8 +3,6 @@ import { provideRouter } from '@angular/router';
 
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import Aura from '@primeng/themes/aura';
-import { providePrimeNG } from 'primeng/config';
 import { routes } from './app.routes';
 import { AuthGuard } from './core/auth/services/auth-guard.service';
 import { loggingInterceptor, urlInterceptor } from './core/interceptors/api.interceptor';
@@ -18,11 +16,11 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([loggingInterceptor, tokenInterceptor, urlInterceptor])
     ),
     provideAnimationsAsync(),
-    providePrimeNG({
-      theme: {
-        preset: Aura
-      }
-    }),
+    // providePrimeNG({
+    //   theme: {
+    //     preset: Aura
+    //   }
+    // }),
     AuthGuard
   ],
 

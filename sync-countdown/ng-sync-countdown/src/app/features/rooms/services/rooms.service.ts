@@ -13,7 +13,12 @@ export class RoomsService {
     return this.http.get<Room[]>("/rooms");
   }
 
-  findById(roomId: string ) {
-    return this.http.get<Room | null >("/rooms/" + roomId);
+  findById(roomId: string) {
+    return this.http.get<Room | null>("/rooms/" + roomId);
+  }
+
+  saveRoom(roomName: string) {
+    return this.http.post<Room>("/rooms",  roomName  );
+
   }
 }
