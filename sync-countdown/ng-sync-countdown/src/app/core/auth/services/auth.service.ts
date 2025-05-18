@@ -12,19 +12,32 @@ import { JwtService } from './jwt.service';
   providedIn: 'root'
 })
 export class AuthService {
+  // replaced by Signal
   private currentUserSubject = new BehaviorSubject<CurrentUser| null>(null);
   public currentUser$ = this.currentUserSubject
   .asObservable()
   .pipe(distinctUntilChanged());
 
-  public isAuthenticated = this.currentUser$.pipe(map(user  => !!user ));
-  public isAdmin = this.currentUser$.pipe(map( user => !!user?.authorities.some(a => a.authority === "ROLE_ADMIN")));
+  // currentUser$ = signal<CurrentUser | null | undefined>(undefined);
+  // public isAuthenticated = this.currentUserSig();
+  // public isAdmin = this.currentUserSig()?.authorities.some(a => a.authority === "ROLE_ADMIN");
+
+  public isAuthenticated$ = this.currentUser$.pipe(map(user => !!user));
+  public isAdmin$ = this.currentUser$.pipe(
+    map(user => !!user?.authorities.some(a => a.authority === "ROLE_ADMIN"))
+  );
 
   constructor(
     private readonly http: HttpClient,
     private readonly jwtService: JwtService,
     private readonly router: Router,
-  ) { }
+  ) {
+    const user = this.jwtService.user();
+    if(user) {
+      this.currentUserSubject.next(user);
+    }
+
+  }
 
   signup(email: string, password: string): Observable<ResultResponse<{username: string} | null >> {
     const hashedPassword = bcrypt.hashSync(password, 10);
@@ -73,6 +86,8 @@ export class AuthService {
   setAuth(user: CurrentUser) : void {
     this.jwtService.set(user.token);
     this.currentUserSubject.next(user);
+    console.log({user})
+    // this.currentUserSig.set(user);
   }
 
   getAuthToken() : string | null {
@@ -82,5 +97,6 @@ export class AuthService {
   purgeAuth() {
     this.jwtService.remove();
     this.currentUserSubject.next(null);
+    // this.currentUserSig.set(undefined);
   }
 }

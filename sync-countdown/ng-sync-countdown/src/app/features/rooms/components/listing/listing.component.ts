@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
-import { Observable } from 'rxjs';
 import { Room } from '../../models/room';
 import { RoomsService } from '../../services/rooms.service';
 import { RoomPreviewComponent } from '../room-preview/room-preview.component';
@@ -13,7 +12,7 @@ import { NewRoomDialogComponent } from './new-room-dialog/new-room-dialog.compon
 
 @Component({
   selector: 'app-listing',
-  imports: [CommonModule, RoomPreviewComponent, MatListModule, MatButtonModule, MatIconModule, MatDialogModule, AsyncPipe],
+  imports: [CommonModule, AsyncPipe,  RoomPreviewComponent, MatListModule, MatButtonModule, MatIconModule, MatDialogModule],
   styleUrl: './listing.component.css',
   template: `
   @if(isAdmin$ | async) {
@@ -33,13 +32,12 @@ import { NewRoomDialogComponent } from './new-room-dialog/new-room-dialog.compon
 export class ListingComponent implements OnInit {
 
   roomsService = inject(RoomsService);
-  isAdmin$: Observable<boolean>= inject(AuthService).isAdmin;
+  isAdmin$ = inject(AuthService).isAdmin$;
 
   rooms: Room[] = [];
   readonly dialog = inject(MatDialog)
 
   constructor() {
-    console.log(this.isAdmin$)
   }
 
   openDialog() {
@@ -52,6 +50,9 @@ export class ListingComponent implements OnInit {
   }
 
   ngOnInit(): void {
+
+    console.log("isAdmin: " , this.isAdmin$)
+
     this.roomsService.findAll()
       .subscribe({
         next: (resp => {

@@ -3,7 +3,7 @@ import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable } from 'rxjs/internal/Observable';
 import { AuthService } from './core/auth/services/auth.service';
 
 @Component({
@@ -34,7 +34,7 @@ import { AuthService } from './core/auth/services/auth.service';
       </section>
 
       <section class="nav-auth ml-auto flex gap-5">
-        @if(currentUser$ | async ) {
+        @if(isAuthenticated$ | async) {
           <button mat-stroked-button (click)="logout()"> Logout </button>
         } @else {
             <a [routerLink]="['/login']">
@@ -62,10 +62,11 @@ export class AppComponent {
 
   authService: AuthService = inject(AuthService);
   // NOTE: using reactive programming to update this current user.
-  currentUser$!: Observable<CurrentUser | null>;
+  currentUser$!: Observable<CurrentUser | undefined | null>;
+  // isAuthenticated: boolean = inject(AuthService).isAuthenticated;
+  isAuthenticated$ = inject(AuthService).isAuthenticated$ ;
 
   constructor() {
-    this.currentUser$ = this.authService.currentUser$;
   }
 
   logout() {

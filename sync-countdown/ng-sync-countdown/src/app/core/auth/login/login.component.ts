@@ -1,8 +1,9 @@
 import { CurrentUser } from '@/shared/models/current-user';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
+import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 @Component({
@@ -44,7 +45,6 @@ import { AuthService } from '../services/auth.service';
 })
 export class LoginComponent {
 
-  // loginResult$!: Observable<CurrentUser>;
   loginResult!: CurrentUser;
   errorMessage!: string | null;
 
@@ -53,8 +53,15 @@ export class LoginComponent {
     password: new FormControl("", Validators.required),
   })
 
-  constructor(private readonly authService: AuthService) {
+  private isAuthenticated$ = inject(AuthService).isAuthenticated$;
+  private router = inject(Router);
 
+  constructor(private readonly authService: AuthService) {
+    this.isAuthenticated$.subscribe( value => {
+      if(value) {
+        this.router.navigate(["/"]);
+      }
+    })
   }
 
   onSubmit() {
