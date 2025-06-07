@@ -4,6 +4,11 @@ import { SignupComponent } from './core/auth/signup/signup.component';
 
 export const routes: Routes = [
   {
+    path: "",
+    redirectTo: "rooms",
+    pathMatch: "full"
+  },
+  {
     path: "login",
     component: LoginComponent,
     title: "Login"
@@ -18,7 +23,7 @@ export const routes: Routes = [
     children: [
       {
         path: "",
-        loadComponent: () => import("@/app/features/rooms/components/listing/listing.component").then(m => m.ListingComponent),
+        loadComponent: () => import("@/app/core/rooms-listing/listing.component").then(m => m.ListingComponent),
         title: "Rooms",
 
       },

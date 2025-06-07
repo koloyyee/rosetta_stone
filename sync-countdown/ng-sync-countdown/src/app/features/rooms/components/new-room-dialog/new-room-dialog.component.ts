@@ -1,3 +1,4 @@
+import { RoomsService } from '@/app/core/rooms-listing/services/rooms.service';
 import { logger } from '@/shared/utils/helper';
 import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -5,7 +6,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { RoomsService } from '../../../services/rooms.service';
 
 @Component({
   selector: 'app-new-room-dialog',

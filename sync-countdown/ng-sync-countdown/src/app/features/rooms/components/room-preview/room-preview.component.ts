@@ -1,7 +1,7 @@
+import { Room } from '@/app/core/rooms-listing/models/room';
 import { Component, Input } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { RouterModule } from '@angular/router';
-import { Room } from '../room/room';
 
 @Component({
   selector: 'app-room-preview',

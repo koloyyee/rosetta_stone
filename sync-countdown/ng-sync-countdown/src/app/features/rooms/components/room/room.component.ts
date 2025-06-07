@@ -8,12 +8,12 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RxStomp } from '@stomp/rx-stomp';
 import { Subscription } from 'rxjs';
 import { WebSocketSubject } from 'rxjs/webSocket';
-import { Room } from './room';
-import { RoomsService } from '../../services/rooms.service';
-import { WebSocketService } from '../../services/websocket.service';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
+import { RoomsService } from '@/app/core/rooms-listing/services/rooms.service';
+import { WebSocketService } from '@/app/core/rooms-listing/services/websocket.service';
+import { Room } from '@/app/core/rooms-listing/models/room';
 
 @Component({
   selector: 'app-room',
@@ -240,7 +240,7 @@ export class RoomComponent implements OnInit, OnDestroy {
     if (!isNaN(minutes)) {
       const seconds = minutes * 60
       console.log({ seconds });
-      this.duration = seconds;
+      this.duration = seconds + 2; // + 2 to offset
     } else {
       this.duration = 0;
     }
