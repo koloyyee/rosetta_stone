@@ -5,28 +5,33 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
-import { Room } from '../../models/room';
+import { Room } from '../room/room';
 import { RoomsService } from '../../services/rooms.service';
 import { RoomPreviewComponent } from '../room-preview/room-preview.component';
 import { NewRoomDialogComponent } from './new-room-dialog/new-room-dialog.component';
 
 @Component({
   selector: 'app-listing',
-  imports: [CommonModule, AsyncPipe,  RoomPreviewComponent, MatListModule, MatButtonModule, MatIconModule, MatDialogModule],
-  styleUrl: './listing.component.css',
+  imports: [CommonModule, AsyncPipe, RoomPreviewComponent, MatListModule, MatButtonModule, MatIconModule, MatDialogModule],
+  // styleUrl: './listing.component.css',
+  styles: `
+  `,
   template: `
-  @if(isAdmin$ | async) {
-  <button mat-fab (click)="openDialog()">
-      <mat-icon>add</mat-icon>
-  </button>
-  }
+  <div class=" flex flex-col m-20">
+     @if(isAdmin$ | async) {
+     <button mat-fab (click)="openDialog()" class="mt-auto ml-auto">
+         <mat-icon>add</mat-icon>
+     </button>
+     }
+  <h1 class="text-xl border-b-blue-200 border-b-8 w-1/3"> Find your Room! </h1>
   <mat-list role="list">
-  @for( room of rooms; track room.id) {
-    <mat-list-item role="list-item">
-      <app-room-preview [room]="room" ></app-room-preview>
-    </mat-list-item>
-  }
+     @for( room of rooms; track room.id) {
+       <mat-list-item role="list-item" class="border-b-2 border-slate-400 my-5 hover:shadow-md ">
+         <app-room-preview [room]="room" ></app-room-preview>
+       </mat-list-item>
+     }
   </mat-list>
+  </div>
   `,
 })
 export class ListingComponent implements OnInit {
@@ -50,9 +55,6 @@ export class ListingComponent implements OnInit {
   }
 
   ngOnInit(): void {
-
-    console.log("isAdmin: " , this.isAdmin$)
-
     this.roomsService.findAll()
       .subscribe({
         next: (resp => {

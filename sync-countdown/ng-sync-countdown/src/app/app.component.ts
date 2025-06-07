@@ -5,15 +5,18 @@ import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs/internal/Observable';
 import { AuthService } from './core/auth/services/auth.service';
+import { MatIconModule } from '@angular/material/icon';
+import { MatToolbarModule } from '@angular/material/toolbar';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterModule, CommonModule, MatButtonModule, AsyncPipe],
+  imports: [RouterModule, CommonModule, MatButtonModule, AsyncPipe, MatToolbarModule, MatButtonModule, MatIconModule ],
+
   // templateUrl: './app.component.html',
   styleUrl: './app.component.css',
   template: `
   <main>
-    <nav class="flex m-10">
+    <mat-toolbar class="flex m-10">
       <section class="logo">
 
       <section class="nav-main mx-auto">
@@ -43,16 +46,12 @@ import { AuthService } from './core/auth/services/auth.service';
               </button>
             </a>
 
-          <a [routerLink]="['/signup']">
-					<button mat-raised-button>
+          <a mat-raised-button [routerLink]="['/signup']">
             Sign Up
-          </button>
           </a>
         }
       </section>
-
-    </nav>
-
+    </mat-toolbar>
       <router-outlet></router-outlet>
   </main>
   `,

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Room } from '../models/room';
+import { Room } from '../components/room/room';
 
 @Injectable({
   providedIn: 'root'
