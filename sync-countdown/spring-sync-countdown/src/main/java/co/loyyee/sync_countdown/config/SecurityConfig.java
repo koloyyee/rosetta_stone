@@ -9,6 +9,7 @@ import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
 import static org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType.H2;
 import org.springframework.security.config.Customizer;
@@ -55,14 +56,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain sfc(HttpSecurity http) throws Exception {
         return http
-                // .csrf(AbstractHttpConfigurer::disable)
-                .csrf((csrf) -> csrf.ignoringRequestMatchers("/auth/token", "/auth/signup", "/h2-console/**", "/portfolio", "/timer"))
-                // .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf((csrf) -> csrf.ignoringRequestMatchers("/auth/token", "/auth/signup", "/h2-console/**",  "/timer"))
                 .cors(Customizer.withDefaults())
                 .headers(headers -> headers.disable())
                 .authorizeHttpRequests(auth
                         -> auth
-                        .requestMatchers("/h2-console/**", "/auth/signup", "/portfolio", "/timer").permitAll()
+                        .requestMatchers("/h2-console/**", "/auth/signup",  "/timer").permitAll()
+                        // allow unregistered user to visit any room(s)
+                        .requestMatchers(HttpMethod.GET, "/rooms/**").permitAll()
                         .anyRequest()
                         .authenticated()
                 )

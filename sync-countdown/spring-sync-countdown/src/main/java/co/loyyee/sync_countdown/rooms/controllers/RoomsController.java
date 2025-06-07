@@ -20,12 +20,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.loyyee.sync_countdown.rooms.models.Room;
-import co.loyyee.sync_countdown.rooms.repositories.RoomsRepositoryImpl;
+import co.loyyee.sync_countdown.rooms.repositories.RoomsRepository;
 import co.loyyee.sync_countdown.rooms.services.TimerService;
 
 @RequestMapping("/rooms")
@@ -35,10 +34,10 @@ public class RoomsController {
 
     private static final Logger logger = LoggerFactory.getLogger(RoomsController.class);
 
-    private final RoomsRepositoryImpl roomRepoImpl;
+    private final RoomsRepository roomRepoImpl;
     private final TimerService timerService;
 
-    public RoomsController(RoomsRepositoryImpl roomRepoImpl, TimerService timerService) {
+    public RoomsController(RoomsRepository roomRepoImpl, TimerService timerService) {
         this.roomRepoImpl = roomRepoImpl;
         this.timerService = timerService;
     }
@@ -53,9 +52,24 @@ public class RoomsController {
         return this.roomRepoImpl.findById(roomId);
     }
 
+    @PutMapping("/extend/{roomId}")
+    public ResponseEntity<?> extend(@PathVariable UUID roomId, @RequestBody Long extendMinutes) {
+        var currentRoom = this.roomRepoImpl.findById(roomId);
+        if (currentRoom.isPresent()) {
+            LocalDateTime newEndtime = currentRoom.get().endTime().plusMinutes(extendMinutes);
+            this.roomRepoImpl.extendDuration(roomId, newEndtime);
+
+            return ResponseEntity.ok(newEndtime);
+        }
+
+        return ResponseEntity.badRequest().body(null);
+    }
+
     @PostMapping()
-    public Room saveRoom(@RequestParam Room room) {
-        return this.roomRepoImpl.save(room);
+    public Room saveRoom(@RequestBody String roomName) {
+        var newRoom = new Room(null, roomName, null, null, false);
+        logger.info("newRoom: {}", newRoom);
+        return this.roomRepoImpl.save(newRoom);
     }
 
     @PutMapping("/{roomId}")
@@ -69,11 +83,12 @@ public class RoomsController {
 
     /**
      * WebSocket entry endpoint: /app/timer/start destination: /topic/timer
+     *
+     * we can differentiate each function with the "." separator.
      */
     @MessageMapping("/timer.startTimer/{roomId}")
     @SendTo("/topic/timer/status/{roomId}")
-    // public ResponseEntity<?> startTimer(@DestinationVariable String roomId, RoomBooking booking) {
-    public ResponseEntity<?> startTimer(@DestinationVariable String roomId,  @Payload RoomBooking booking) {
+    public ResponseEntity<?> startTimer(@DestinationVariable String roomId, @Payload RoomBooking booking) {
 
         var startTime = LocalDateTime.now(Clock.system(ZoneId.of("America/Toronto")));
         var endTime = startTime.plusSeconds(booking.duration());
@@ -101,7 +116,7 @@ public class RoomsController {
 
         if (currentRoom.isPresent()) {
             var room = currentRoom.get();
-            var updatedRoom =  roomRepoImpl.save(new Room(room.id(), room.name(), room.startTime(), room.endTime(), false));
+            var updatedRoom = roomRepoImpl.save(new Room(room.id(), room.name(), room.startTime(), room.endTime(), false));
             // convert to String because WebSocket doesn't support UUID
             timerService.pause(room.id().toString());
             logger.info("[SUCCESS]: room {}", room.id());
@@ -113,6 +128,22 @@ public class RoomsController {
         return ResponseEntity.badRequest().body(null);
     }
 
+    @MessageMapping("/timer.stopTimer/{roomId}")
+    // @SendTo("/topic/timer/status/{roomId}")
+    public ResponseEntity<?> stopTimer(@DestinationVariable String roomId, RoomBooking booking) {
+
+        var currentRoom = roomRepoImpl.findById(booking.roomId());
+        if (currentRoom.isPresent()) {
+            var room = currentRoom.get();
+            var updatedRoom = roomRepoImpl.save(new Room(room.id(), room.name(), null, null, false));
+            timerService.stop(room.id().toString());
+            logger.info("[SUCCESS]: room {}", room.id());
+
+            return ResponseEntity.ok(updatedRoom);
+        }
+        return ResponseEntity.badRequest().body(null);
+    }
+
     @MessageMapping("/timer.resumeTimer/{roomId}")
     @SendTo("/topic/timer/status/{roomId}")
     public ResponseEntity<?> resumeTimer(@DestinationVariable String roomId, RoomBooking booking) {
@@ -121,7 +152,7 @@ public class RoomsController {
 
         if (currentRoom.isPresent()) {
             var room = currentRoom.get();
-            var updatedRoom =  roomRepoImpl.save(new Room(room.id(), room.name(), room.startTime(), room.endTime(), true));
+            var updatedRoom = roomRepoImpl.save(new Room(room.id(), room.name(), room.startTime(), room.endTime(), true));
             // convert to String because WebSocket doesn't support UUID
             timerService.resume(room.id().toString());
             logger.info("[SUCCESS]: room {}", room.id());
@@ -133,13 +164,16 @@ public class RoomsController {
         return ResponseEntity.badRequest().body(null);
     }
 
+    /**
+     * Why no @SendTo() ? because @SendTo will prevent from broadcasting from my
+     * timerService layer.
+     *
+     * @SendTo is when we need to return a specific value.
+     */
     @MessageMapping("/timer.remainingTime/{roomId}")
-    public ResponseEntity<?> remainingTime(@DestinationVariable String roomId) {
+    public void remainingTime(@DestinationVariable String roomId) {
         if (roomId != null) {
             timerService.sendRemainingTime(roomId);
-            return ResponseEntity.ok("Success: Requesting Room remaining time.");
         }
-
-            return ResponseEntity.badRequest().body("Failed: Requesting Room remaining time.");
     }
 }

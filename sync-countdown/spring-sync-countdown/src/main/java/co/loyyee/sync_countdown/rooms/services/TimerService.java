@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -14,15 +15,31 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import co.loyyee.sync_countdown.book_records.models.BookingRecord;
+import co.loyyee.sync_countdown.book_records.repositories.BookingRecordsRepository;
+
 @Service
 public class TimerService {
 
     private static final Logger logger = LoggerFactory.getLogger(TimerService.class);
-    private final SimpMessagingTemplate template;
     private final Map<String, TimerData> timers = new ConcurrentHashMap<>();
+    private final ZoneId zoneId = ZoneId.systemDefault();
 
-    public TimerService(SimpMessagingTemplate template) {
+    private final SimpMessagingTemplate template;
+    private final BookingRecordsRepository bookingRecordsRepository;
+
+    public TimerService(BookingRecordsRepository bookingRecordsRepository, SimpMessagingTemplate template) {
+        this.bookingRecordsRepository = bookingRecordsRepository;
         this.template = template;
+    }
+
+    /**
+     * Getting the current time by server's location zone id.
+     *
+     * @return now
+     */
+    private LocalDateTime now() {
+        return LocalDateTime.now(Clock.system(zoneId));
     }
 
     /**
@@ -35,30 +52,33 @@ public class TimerService {
 
     public void pause(String roomId) {
         var timer = timers.get(roomId);
-        if (timer != null) {
+        if (timer != null && timer.state == TimerState.RUNNING) {
             timer.state = TimerState.PAUSED;
-            var now = LocalDateTime.now(Clock.system(ZoneId.of("America/Toronto")));
-            timer.remaining = Duration.between(now, timer.startTime.plusSeconds(timer.duration)).getSeconds();
+            // recalculate the remaining
+            timer.remaining = Duration.between(now(), timer.startTime.plusSeconds(timer.duration)).getSeconds();
         }
         sendRemainingTime(roomId);
     }
 
     public void resume(String roomId) {
         var timer = timers.get(roomId);
-        if (timer != null) {
+        if (timer != null && timer.state != TimerState.RUNNING) {
             // Note: create a new temp now for resetting the start time
-            var now = LocalDateTime.now(Clock.system(ZoneId.of("America/Toronto")));
-            var newStartTime = now.minusSeconds(timer.duration - timer.remaining);
-						timer.startTime = newStartTime;
-						timer.state = TimerState.RUNNING;
+            // offset by - 1 because the milliseconds differences will cause it round down missing a second.
+            var newStartTime = now().minusSeconds((timer.duration - timer.remaining) - 1);
+            timer.startTime = newStartTime;
+            timer.state = TimerState.RUNNING;
         }
-				sendRemainingTime(roomId);
+        sendRemainingTime(roomId);
     }
 
     public void stop(String roomId) {
         var timer = timers.get(roomId);
-        if (timer != null) {
+        if (timer != null && timer.state == TimerState.RUNNING) {
             timer.state = TimerState.STOPPED;
+            timer.startTime = null;
+            timer.duration = 0;
+            timer.remaining = 0;
         }
         sendRemainingTime(roomId);
     }
@@ -81,31 +101,33 @@ public class TimerService {
         var state = timer.state;
         var duration = timer.duration;
 
-        var now = LocalDateTime.now(Clock.system(ZoneId.of("America/Toronto")));
-
         Map<String, Object> response = new HashMap<>();
         response.put("remaining", 0L);
         response.put("state", state.name());
 
+        final var roomRemainingTopic = "/topic/timer/remaining/" + roomId;
+
         switch (state) {
             case TimerState.RUNNING -> {
-                long remaining = Duration.between(now, startTime.plusSeconds(duration)).getSeconds();
+                long remaining = Duration.between(now(), startTime.plusSeconds(duration)).getSeconds();
                 logger.info("Remaining seconds :" + remaining);
                 if (remaining >= 0) {
                     response.put("remaining", remaining);
-                    template.convertAndSend("/topic/timer/remaining/" + roomId, response);
+                    template.convertAndSend(roomRemainingTopic, response);
                 } else {
                     timer.state = TimerState.FINISHED;
-                    template.convertAndSend("/topic/timer/remaining/" + roomId, response);
+                    template.convertAndSend(roomRemainingTopic, response);
                 }
             }
-            case TimerState.FINISHED ->
-                template.convertAndSend("/topic/timer/remaining/" + roomId, response);
-            case TimerState.STOPPED ->
-                template.convertAndSend("/topic/timer/remaining/" + roomId, response);
+            // When timer state is STOPPED or FINISHED, it will be recorded in database.
+            case TimerState.FINISHED, TimerState.STOPPED -> {
+                template.convertAndSend(roomRemainingTopic, response);
+                BookingRecord newRecord = new BookingRecord(null, UUID.fromString(roomId), startTime, now());
+                bookingRecordsRepository.save(newRecord);
+            }
             case TimerState.PAUSED -> {
                 response.put("remaining", Math.max(0L, timer.remaining));
-                template.convertAndSend("/topic/timer/remaining/" + roomId, response);
+                template.convertAndSend(roomRemainingTopic, response);
             }
         }
 
@@ -115,7 +137,10 @@ public class TimerService {
     public void scheduleRemainingTime() {
         for (var room : timers.entrySet()) {
             var roomId = room.getKey();
-            sendRemainingTime(roomId);
+            var timer = room.getValue();
+            if (timer.state == TimerState.RUNNING || timer.state == TimerState.STOPPED) {
+                sendRemainingTime(roomId);
+            }
         }
     }
 
@@ -130,9 +155,6 @@ public class TimerService {
             this.startTime = startTime;
             this.duration = duration;
             this.state = state;
-
-            // var now = LocalDateTime.now(Clock.system(ZoneId.of("America/Toronto")));
-            // this.remaining = Duration.between(now, startTime.plusSeconds(duration)).getSeconds();
         }
     }
 
