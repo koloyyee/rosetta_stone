@@ -41,7 +41,7 @@ import { Room } from '@/app/core/rooms-listing/models/room';
           type="number"
           [(ngModel)]="minutesInput"
           (input)="convertDuration($event)"
-          [disabled]="room.state !== 'STOPPED' || !room.state"
+          [disabled]="room.state && room.state !== 'STOPPED'"
         />
         @if (minutesInput) {
         <button
@@ -57,7 +57,12 @@ import { Room } from '@/app/core/rooms-listing/models/room';
       </mat-form-field>
 
       @if(room) { @if(room.state === "STOPPED" || !room.state) {
-      <button mat-flat-button class="bg-red-500" (click)="start()" [disabled]="duration == 0">
+      <button
+        mat-flat-button
+        class="bg-red-500"
+        (click)="start()"
+        [disabled]="duration == 0"
+      >
         START
       </button>
       } @else if (room.state === "PAUSED") {
@@ -196,10 +201,11 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   updateTimerDisplay() {
+    const safeTime = Math.max(0, this.remainingTime);
     // Calculate hours, minutes, seconds
-    const hours = Math.floor(this.remainingTime / 3600);
-    const minutes = Math.floor((this.remainingTime % 3600) / 60);
-    const seconds = this.remainingTime % 60;
+    const hours = Math.floor(safeTime / 3600);
+    const minutes = Math.floor((safeTime % 3600) / 60);
+    const seconds = safeTime % 60;
 
     // Format with leading zeros
     this.formattedTime =
@@ -238,7 +244,7 @@ export class RoomComponent implements OnInit, OnDestroy {
   convertDuration(event: Event) {
     const minutes = parseInt((event.target as HTMLInputElement)?.value);
     if (!isNaN(minutes)) {
-      const seconds = minutes * 60
+      const seconds = minutes * 60;
       console.log({ seconds });
       this.duration = seconds + 2; // + 2 to offset
     } else {

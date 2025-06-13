@@ -109,7 +109,7 @@ public class TimerService {
 
         switch (state) {
             case TimerState.RUNNING -> {
-                long remaining = Duration.between(now(), startTime.plusSeconds(duration)).getSeconds();
+                long remaining = Math.max(0, Duration.between(now(), startTime.plusSeconds(duration)).getSeconds());
                 logger.info("Remaining seconds :" + remaining);
                 if (remaining >= 0) {
                     response.put("remaining", remaining);
