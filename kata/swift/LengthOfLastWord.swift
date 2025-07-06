@@ -56,7 +56,11 @@
 import Foundation
 
 func lengthOfLastWord(_ s: String) -> Int {
-  return s.trimmingCharacters(in: .whitespaces).split(separator: " ").last!.count
+  return s
+  // .trimmingCharacters(in: .whitespaces)
+    .split(separator: " ")
+    .last!
+    .count
 }
 
 let s = " fly  me to  the moon "
