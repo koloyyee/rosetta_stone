@@ -56,12 +56,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain sfc(HttpSecurity http) throws Exception {
         return http
-                .csrf((csrf) -> csrf.ignoringRequestMatchers("/auth/token", "/auth/signup", "/h2-console/**",  "/timer"))
+                .csrf((csrf) -> csrf.ignoringRequestMatchers("/auth/token", "/auth/signup", "/h2-console/**", "/timer"))
                 .cors(Customizer.withDefaults())
                 .headers(headers -> headers.disable())
                 .authorizeHttpRequests(auth
                         -> auth
-                        .requestMatchers("/h2-console/**", "/auth/signup",  "/timer").permitAll()
+                        .requestMatchers("/h2-console/**", "/auth/signup", "/timer").permitAll()
                         // allow unregistered user to visit any room(s)
                         .requestMatchers(HttpMethod.GET, "/rooms/**").permitAll()
                         .anyRequest()
@@ -83,7 +83,7 @@ public class SecurityConfig {
      *
      * @return
      */
-    @Bean
+    // @Bean
     DataSource dataSource() {
         return new EmbeddedDatabaseBuilder()
                 .setName("sync-countdown")
@@ -92,13 +92,17 @@ public class SecurityConfig {
                 .build();
     }
 
-    // @Bean
-    // public JdbcUserDetailsManager jdbcUserDetailsManager(DataSource dataSource) {
-    //     return new JdbcUserDetailsManager(dataSource);
-    // }
     @Bean
+    JdbcUserDetailsManager jdbcUserDetailsManager(DataSource dataSource) {
+        return new JdbcUserDetailsManager(dataSource);
+    }
+
+    // @Bean
     UserDetailsManager users(DataSource dataSource, PasswordEncoder passwordEncoder) {
         // default user
+
+        JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
+
         UserDetails user = User.builder()
                 .username("user@sync.room")
                 .password(passwordEncoder.encode("password"))
@@ -109,7 +113,6 @@ public class SecurityConfig {
                 .password(passwordEncoder.encode("password"))
                 .roles("USER", "ADMIN")
                 .build();
-        JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
         users.createUser(user);
         users.createUser(admin);
         return users;
@@ -133,7 +136,8 @@ public class SecurityConfig {
     }
 
     /**
-     * This being used automagically with @Bean 
+     * This being used automagically with @Bean
+     *
      * @return
      */
     @Bean
