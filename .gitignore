@@ -353,3 +353,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+
+#### WIP ######
+**/clj-sync-countdown/
+**/ng-sync-countdown/
