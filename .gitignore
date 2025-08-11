@@ -358,3 +358,4 @@ cython_debug/
 
 #### WIP ######
 **/clj-sync-countdown/
+**/rr-sync-countdown/

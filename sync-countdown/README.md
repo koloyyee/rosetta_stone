@@ -32,6 +32,6 @@ Each implementation is located in its own subdirectory:
 ## Roadmap
 
 - [x] Spring Boot backend
-- [x] React Router v7 frontend
+- [] React Router v7 frontend
 - [ ] Clojure(Script) implementation
-- [ ] Angular implementation
+- [x] Angular implementation
