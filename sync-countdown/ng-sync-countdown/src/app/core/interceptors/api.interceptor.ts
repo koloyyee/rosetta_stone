@@ -1,7 +1,7 @@
-import { environment } from "@/shared/environment";
-import { logger } from "@/shared/utils/helper";
+import { environment } from "@/app/environments/environment";
 import { HttpEvent, HttpHandlerFn, HttpRequest } from "@angular/common/http";
 import { Observable } from "rxjs";
+import { logger } from "../utils/helper";
 
 export function urlInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   const apiUrl = environment.apiUrl + req.url;
@@ -11,7 +11,7 @@ export function urlInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): 
 }
 
 export function loggingInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
-  logger(req.url);
-  logger(req);
+  logger.info(req.url);
+  logger.info(req);
   return next(req);
 }

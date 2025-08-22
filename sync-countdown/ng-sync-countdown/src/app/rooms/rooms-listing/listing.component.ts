@@ -1,14 +1,14 @@
 import { AuthService } from '@/app/core/auth/services/auth.service';
+import { NewRoomDialogComponent } from '@/app/rooms/new-room-dialog/new-room-dialog.component';
+import { RoomPreviewComponent } from '@/app/rooms/room-preview/room-preview.component';
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
-import { RoomPreviewComponent } from '@/app/features/rooms/components/room-preview/room-preview.component';
-import { NewRoomDialogComponent } from '@/app/features/rooms/components/new-room-dialog/new-room-dialog.component';
-import { Room } from './models/room';
-import { RoomsService } from './services/rooms.service';
+import type { Room } from '../models/room';
+import { RoomsService } from '../services/rooms.service';
 
 @Component({
   selector: 'app-listing',

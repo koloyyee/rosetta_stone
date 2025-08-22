@@ -14,6 +14,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,6 +53,7 @@ public class RoomsController {
         return this.roomRepoImpl.findById(roomId);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/extend/{roomId}")
     public ResponseEntity<?> extend(@PathVariable UUID roomId, @RequestBody Long extendMinutes) {
         var currentRoom = this.roomRepoImpl.findById(roomId);
@@ -65,6 +67,7 @@ public class RoomsController {
         return ResponseEntity.badRequest().body(null);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping()
     public Room saveRoom(@RequestBody String roomName) {
         var newRoom = new Room(null, roomName, null, null, false);

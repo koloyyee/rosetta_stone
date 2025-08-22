@@ -1,12 +1,12 @@
-import { CurrentUser } from '@/shared/models/current-user';
+import { CurrentUser } from '@/app/core/models/current-user';
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterModule } from '@angular/router';
 import { Observable } from 'rxjs/internal/Observable';
 import { AuthService } from './core/auth/services/auth.service';
-import { MatIconModule } from '@angular/material/icon';
-import { MatToolbarModule } from '@angular/material/toolbar';
 
 @Component({
   selector: 'app-root',

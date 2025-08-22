@@ -1,6 +1,7 @@
 -- Enable UUID extension (if not already enabled)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+
 create table IF NOT EXISTS users(
 	username varchar(100) not null primary key,
 	password varchar(500) not null,

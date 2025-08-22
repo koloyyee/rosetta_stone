@@ -12,13 +12,15 @@ describe('AuthService', () => {
       providers: [
         AuthService, 
         provideHttpClient(),
-        provideHttpClient(),]
+        provideHttpClient(),
+      ]
     });
     service = TestBed.inject(AuthService);
 
     httpClientSpy = jasmine.createSpyObj('HttpClient', ['get', 'post']);
-    service = new AuthService(httpClientSpy);
-
+    const jwtServiceSpy = jasmine.createSpyObj('JwtService', ['user']);
+    const routerSpy = jasmine.createSpyObj('Router', ['navigate', 'navigateByUrl']);
+    service = new AuthService(httpClientSpy, jwtServiceSpy, routerSpy);
 
   });
 

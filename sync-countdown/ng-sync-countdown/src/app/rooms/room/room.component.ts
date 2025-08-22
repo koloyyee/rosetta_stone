@@ -1,19 +1,19 @@
 import { AuthService } from '@/app/core/auth/services/auth.service';
 import { HasRoleDirective } from '@/app/core/auth/services/has-role.directive';
-import { logger } from '@/shared/utils/helper';
-import { AsyncPipe, CommonModule } from '@angular/common';
+import { logger } from '@/app/core/utils/helper';
+import { RoomsService } from '@/app/rooms/services/rooms.service';
+import { WebSocketService } from '@/app/rooms/services/websocket.service';
+import { CommonModule } from '@angular/common';
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RxStomp } from '@stomp/rx-stomp';
 import { Subscription } from 'rxjs';
 import { WebSocketSubject } from 'rxjs/webSocket';
-import { MatInputModule } from '@angular/material/input';
-import { MatIconModule } from '@angular/material/icon';
-import { FormsModule } from '@angular/forms';
-import { RoomsService } from '@/app/core/rooms-listing/services/rooms.service';
-import { WebSocketService } from '@/app/core/rooms-listing/services/websocket.service';
-import { Room } from '@/app/core/rooms-listing/models/room';
+import type { Room } from '../models/room';
 
 @Component({
   selector: 'app-room',
@@ -22,7 +22,6 @@ import { Room } from '@/app/core/rooms-listing/models/room';
     RouterModule,
     MatButtonModule,
     HasRoleDirective,
-    AsyncPipe,
     MatInputModule,
     MatIconModule,
     FormsModule,
@@ -104,6 +103,29 @@ export class RoomComponent implements OnInit, OnDestroy {
     this.remainingTime = 0;
   }
 
+  ngOnInit(): void {
+    const roomId = this.route.snapshot.params['id'];
+    this.roomService.findById(roomId).subscribe({
+      next: (room) => {
+        if (room) {
+          this.room = room;
+          this.connect();
+          this.requestRemaining();
+          this.startLocalTimer();
+        }
+      },
+    });
+  }
+
+  ngOnDestroy(): void {
+    const roomId = this.route.snapshot.params['id'];
+    this.webSocketService.disconnectFromRoom(roomId);
+    (async () => {
+      logger.info('disconnecting.');
+      await this.end();
+    })();
+  }
+
   connect() {
     const WS_CONN = 'ws://localhost:8080/timer';
     if (this.token) {
@@ -123,15 +145,15 @@ export class RoomComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (msg) => {
             const payload = JSON.parse(msg.body);
-            logger(payload.body, { level: 'info' });
+            logger.info(payload.body);
             const room = payload.body;
             this.room = room;
             this.requestRemaining();
 
-            logger('Connection complete');
+            logger.info('Connection complete');
           },
-          error: (err) => logger('WebSocket error:' + err, { level: 'error' }),
-          complete: () => logger('WebSocket connection closed'),
+          error: (err) => logger.error(err, 'WebSocket error:'),
+          complete: () => logger.info('WebSocket connection closed'),
         });
 
       // Subscribe to Remaining Time
@@ -144,10 +166,10 @@ export class RoomComponent implements OnInit, OnDestroy {
             this.remainingTime = payload.remaining;
             this.updateTimerDisplay();
           },
-          error: (err) => logger('WebSocket error:' + err, { level: 'error' }),
-          complete: () => logger('WebSocket connection closed'),
+          error: (err) => logger.error(err, 'WebSocket error:'),
+          complete: () => logger.info('WebSocket connection closed'),
         });
-      logger('Subscription complete');
+      logger.info('Subscription complete');
     }
   }
 
@@ -250,28 +272,5 @@ export class RoomComponent implements OnInit, OnDestroy {
     } else {
       this.duration = 0;
     }
-  }
-
-  ngOnInit(): void {
-    const roomId = this.route.snapshot.params['id'];
-    this.roomService.findById(roomId).subscribe({
-      next: (room) => {
-        if (room) {
-          this.room = room;
-          this.connect();
-          this.requestRemaining();
-          this.startLocalTimer();
-        }
-      },
-    });
-  }
-
-  ngOnDestroy(): void {
-    const roomId = this.route.snapshot.params['id'];
-    this.webSocketService.disconnectFromRoom(roomId);
-    (async () => {
-      logger('disconnecting.');
-      await this.end();
-    })();
   }
 }

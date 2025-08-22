@@ -22,6 +22,7 @@
     "@stomp/rx-stomp": "^2.0.1",
     "@tailwindcss/postcss": "^4.1.4",
     "bcryptjs": "^3.0.2",
+    "pino": "^9.9.0",
     "postcss": "^8.5.3",
     "rxjs": "~7.8.0",
     "tailwindcss": "^4.1.4",

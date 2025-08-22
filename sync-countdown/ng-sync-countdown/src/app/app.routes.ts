@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './core/auth/login/login.component';
-import { SignupComponent } from './core/auth/signup/signup.component';
+import { LoginComponent } from './login/login.component';
+import { SignupComponent } from './signup/signup.component';
 
 export const routes: Routes = [
   {
@@ -23,13 +23,13 @@ export const routes: Routes = [
     children: [
       {
         path: "",
-        loadComponent: () => import("@/app/core/rooms-listing/listing.component").then(m => m.ListingComponent),
+        loadComponent: () => import("@/app/rooms/rooms-listing/listing.component").then(m => m.ListingComponent),
         title: "Rooms",
 
       },
       {
         path: ":id",
-        loadComponent: () => import("@/app/features/rooms/components/room/room.component").then(m => m.RoomComponent),
+        loadComponent: () => import("@/app/rooms/room/room.component").then(m => m.RoomComponent),
         title: "Room",
       }
     ]

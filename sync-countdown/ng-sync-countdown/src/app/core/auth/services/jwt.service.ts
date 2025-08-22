@@ -1,4 +1,4 @@
-import { CurrentUser } from '@/shared/models/current-user';
+import { CurrentUser } from '@/app/core/models/current-user';
 import { Injectable } from '@angular/core';
 
 @Injectable({

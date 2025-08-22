@@ -3,7 +3,6 @@ package co.loyyee.sync_countdown;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,7 +15,7 @@ public class SyncCountdownApplication {
         SpringApplication.run(SyncCountdownApplication.class, args);
     }
 
-    @Bean
+    // @Bean
     ApplicationRunner run(JdbcUserDetailsManager manager, PasswordEncoder passwordEncoder) {
         return args -> {
 

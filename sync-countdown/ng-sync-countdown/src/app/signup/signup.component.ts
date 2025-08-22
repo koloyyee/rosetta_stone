@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../core/auth/services/auth.service';
+import { logger } from '../core/utils/helper';
 
 @Component({
   selector: 'app-signup',
@@ -68,7 +69,8 @@ export class SignupComponent {
           console.log(resp.data?.username);
       },
       error: (err) => {
-        this.message = err
+        this.message = err;
+        logger.error(err, "Signup submit error");
       }
      })
     }

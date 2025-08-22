@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("ROOM_USERS")
+@Table("room_users")
 public record RoomUser (UUID roomId, String username) {
 
 }

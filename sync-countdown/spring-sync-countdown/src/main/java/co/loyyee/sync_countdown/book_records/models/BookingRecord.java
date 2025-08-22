@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table(name="BOOKING_RECORDS")
+@Table(name="booking_records")
 public record BookingRecord(@Id Long id, UUID roomId, LocalDateTime startTime, LocalDateTime endTime) {
 
 }

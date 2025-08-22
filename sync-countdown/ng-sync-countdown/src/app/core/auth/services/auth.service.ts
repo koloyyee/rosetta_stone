@@ -1,11 +1,11 @@
-import { ResultResponse } from '@/shared/models/result-response';
-import { logger } from '@/shared/utils/helper';
+import { CurrentUser } from '@/app/core/models/current-user';
+import { ResultResponse } from '@/app/core/models/result-response';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { CurrentUser } from '@shared/models/current-user';
 import bcrypt from 'bcryptjs';
 import { BehaviorSubject, catchError, distinctUntilChanged, map, Observable, throwError } from 'rxjs';
+import { logger } from '../../utils/helper';
 import { JwtService } from './jwt.service';
 
 @Injectable({
@@ -51,7 +51,7 @@ export class AuthService {
     .pipe(
       map( resp => resp),
       catchError( (err ) => {
-        logger(err, { level: "error"});
+        logger.error(err)
         return throwError(() => err);
       })
     )

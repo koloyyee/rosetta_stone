@@ -29,7 +29,7 @@ services:
     #     condition: service_healthy
   db:
     image: postgres:17
-    restart: unless-stopped
+    restart: always
     # volumes:
     #   - db-data:/var/lib/postgresql/data
     environment:

@@ -1,10 +1,11 @@
-import { CurrentUser } from '@/shared/models/current-user';
+import { CurrentUser } from '@/app/core/models/current-user';
 import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../core/auth/services/auth.service';
+import { logger } from '../core/utils/helper';
 
 @Component({
   selector: 'app-login',
@@ -73,9 +74,11 @@ export class LoginComponent {
           next: data => {
             this.loginResult = data
             this.errorMessage = null;
+            logger.info(data)
           },
           error: error => {
             this.errorMessage = error ?? "";
+            logger.error(error)
           }
         })
     }

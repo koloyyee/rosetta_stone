@@ -1,6 +1,6 @@
-
-import { logger } from '@/shared/utils/helper';
-import { Component, EventEmitter, inject, output, Output } from '@angular/core';
+import { logger } from '@/app/core/utils/helper';
+import { RoomsService } from '@/app/rooms/services/rooms.service';
+import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -8,13 +8,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 @Component({
-  selector: 'app-set-duration-dialog',
+  selector: 'app-new-room-dialog',
   imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatButtonModule, ReactiveFormsModule],
-  styleUrl: './set-duration-dialog.component.scss',
-  template:`
-     <h2 mat-dialog-title>Create new room</h2>
+  styleUrl: './new-room-dialog.component.scss',
+  template: `
+
+    <h2 mat-dialog-title>Create new room</h2>
       <mat-dialog-content>Create a new room countdown timer</mat-dialog-content>
-      <form class="p-5 flex flex-col" [formGroup]="durationForm" (ngSubmit)="onSubmit()">
+      <form class="p-5 flex flex-col" [formGroup]="newRoomForm" (ngSubmit)="onSubmit()">
         <mat-form-field>
           <mat-label> Room Name:</mat-label>
           <input matInput formControlName="name">
@@ -29,18 +30,28 @@ import { MatInputModule } from '@angular/material/input';
       </mat-dialog-actions>
   `,
 })
-export class SetDurationDialogComponent {
+export class NewRoomDialogComponent {
 
-  duration = output<number>();
-  readonly dialogRef = inject(MatDialogRef<SetDurationDialogComponent>);
 
-  durationForm = new FormGroup({
-    duration: new FormControl(0, [Validators.required, Validators.min(1)])
+  private roomService: RoomsService = inject(RoomsService);
+  readonly dialogRef = inject(MatDialogRef<NewRoomDialogComponent>);
+
+  newRoomForm = new FormGroup({
+    name: new FormControl("", [Validators.required])
   })
 
   onSubmit() {
-    if( this.durationForm.value.duration) {
-        this.duration.emit(this.durationForm.value.duration);
+    console.log(this.newRoomForm.value);
+    if (this.newRoomForm.value.name) {
+      this.roomService.saveRoom(this.newRoomForm.value.name)
+      .subscribe({
+        next: (data) => {
+          this.dialogRef.close(data)
+        },
+        error: (error) => {
+          logger.info(error, "New Room create error")
+        }
+      })
     }
   }
 }

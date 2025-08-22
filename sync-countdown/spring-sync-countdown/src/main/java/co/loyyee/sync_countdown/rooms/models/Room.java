@@ -6,5 +6,5 @@ import java.util.UUID;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table("ROOMS")
+@Table("rooms")
 public record Room(@Id UUID id, String name, LocalDateTime startTime,  LocalDateTime endTime, boolean isTimerRunning) {}

@@ -1,6 +1,5 @@
-import { RoomsService } from '@/app/core/rooms-listing/services/rooms.service';
-import { logger } from '@/shared/utils/helper';
-import { Component, inject } from '@angular/core';
+
+import { Component, inject, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -8,14 +7,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 @Component({
-  selector: 'app-new-room-dialog',
+  selector: 'app-set-duration-dialog',
   imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatButtonModule, ReactiveFormsModule],
-  styleUrl: './new-room-dialog.component.scss',
-  template: `
-
-    <h2 mat-dialog-title>Create new room</h2>
+  styleUrl: './set-duration-dialog.component.scss',
+  template:`
+     <h2 mat-dialog-title>Create new room</h2>
       <mat-dialog-content>Create a new room countdown timer</mat-dialog-content>
-      <form class="p-5 flex flex-col" [formGroup]="newRoomForm" (ngSubmit)="onSubmit()">
+      <form class="p-5 flex flex-col" [formGroup]="durationForm" (ngSubmit)="onSubmit()">
         <mat-form-field>
           <mat-label> Room Name:</mat-label>
           <input matInput formControlName="name">
@@ -30,28 +28,18 @@ import { MatInputModule } from '@angular/material/input';
       </mat-dialog-actions>
   `,
 })
-export class NewRoomDialogComponent {
+export class SetDurationDialogComponent {
 
+  duration = output<number>();
+  readonly dialogRef = inject(MatDialogRef<SetDurationDialogComponent>);
 
-  private roomService: RoomsService = inject(RoomsService);
-  readonly dialogRef = inject(MatDialogRef<NewRoomDialogComponent>);
-
-  newRoomForm = new FormGroup({
-    name: new FormControl("", [Validators.required])
+  durationForm = new FormGroup({
+    duration: new FormControl(0, [Validators.required, Validators.min(1)])
   })
 
   onSubmit() {
-    console.log(this.newRoomForm.value);
-    if (this.newRoomForm.value.name) {
-      this.roomService.saveRoom(this.newRoomForm.value.name)
-      .subscribe({
-        next: (data) => {
-          this.dialogRef.close(data)
-        },
-        error: (error) => {
-          logger(error,{ level: "error"})
-        }
-      })
+    if( this.durationForm.value.duration) {
+        this.duration.emit(this.durationForm.value.duration);
     }
   }
 }
