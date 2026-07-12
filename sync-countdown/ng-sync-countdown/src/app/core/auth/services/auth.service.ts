@@ -3,7 +3,6 @@ import { ResultResponse } from '@/app/core/models/result-response';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import bcrypt from 'bcryptjs';
 import { BehaviorSubject, catchError, distinctUntilChanged, map, Observable, throwError } from 'rxjs';
 import { logger } from '../../utils/helper';
 import { JwtService } from './jwt.service';
@@ -22,7 +21,14 @@ export class AuthService {
   // public isAuthenticated = this.currentUserSig();
   // public isAdmin = this.currentUserSig()?.authorities.some(a => a.authority === "ROLE_ADMIN");
 
-  public isAuthenticated$ = this.currentUser$.pipe(map(user => !!user));
+  // Check the token valid and user exist.
+  public isAuthenticated$ = this.currentUser$.pipe(map(user => {
+    const hasExpired = this.jwtService.hasExpired(user?.token);
+    if (hasExpired) {
+      this.logout();
+    }
+    return !!user && !hasExpired;
+  }));
   public isAdmin$ = this.currentUser$.pipe(
     map(user => !!user?.authorities.some(a => a.authority === "ROLE_ADMIN"))
   );
@@ -40,13 +46,12 @@ export class AuthService {
   }
 
   signup(email: string, password: string): Observable<ResultResponse<{username: string} | null >> {
-    const hashedPassword = bcrypt.hashSync(password, 10);
     const headers = new HttpHeaders( {
       "Skip" : "true"
     })
     return this.http.post<ResultResponse<{username: string}>>("/auth/signup", {
       email: email.toLowerCase(), // normalize email.
-      password: hashedPassword,
+      password: password, // server handles hashing via BCryptPasswordEncoder
     },{ headers})
     .pipe(
       map( resp => resp),
@@ -80,7 +85,7 @@ export class AuthService {
 
   logout() : void{
     this.purgeAuth();
-    void this.router.navigate(["/"]);
+    void this.router.navigate(["/login"]);
   }
 
   setAuth(user: CurrentUser) : void {

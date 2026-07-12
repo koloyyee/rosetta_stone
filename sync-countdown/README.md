@@ -33,5 +33,65 @@ Each implementation is located in its own subdirectory:
 
 - [x] Spring Boot backend
 - [] React Router v7 frontend
-- [ ] Clojure(Script) implementation
+- [] Clojure(Script) implementation
 - [x] Angular implementation
+
+
+
+TODOs
+- [] CRUD user/admin
+- [] CRUD rooms
+- [] invite user via sms or email
+- [] boardcast message from admin to users
+- [] better UI for display
+- [] list records
+
+
+
+### DB Design
+
+Schema: sync_countdown
+
+**Users**
+- username varchar(100) primary key
+- password varchar(60) not null
+- enable boolean not null
+
+**Authorities**
+- username varchar(100) not null
+- authority varchar(50) not null
+- constraint fk_authorities_user foreign key(username) references users(username)
+
+**Rooms**
+- id uuid primary key
+- name varchar(100) not null
+- owner varchar(100) fk_owner_name
+- start_time timestamp
+- end_time timestamp
+- is_timer_running boolean default false
+- capacity int default 500
+
+**Attendees**
+- username varchar(100) primary key
+
+**Room Attendees**
+- room_id uuid
+- attendee varchar(100) not null fk_room_attendee
+- joined_at timestamp
+- primary key (room_id, attendee)
+
+**Room Booking View**
+- room_id uuid
+- room_name varchar(100)
+- room_owner varchar(100)
+- room_start timestamp
+- room_end timestamp
+- attendees_count int
+- attendees string_agg()
+
+*Indexes*
+- ix_auth_username authorities(username, authority)
+
+*trigger*
+- check_room_capcity
+- update_timer_status

@@ -26,56 +26,67 @@ import type { Room } from '../models/room';
     MatIconModule,
     FormsModule,
   ],
-  // templateUrl: './room.component.html',
-  // styleUrl: './room.component.css',
-  // styles: [`button { border: 2px block solid; padding: 3rem; }`],
   template: `
-    <h1>Remaining Time {{ formattedTime }}</h1>
-    <!-- @if(isAdmin$ | async) { -->
-    <div *hasRole="'ROLE_ADMIN'">
-      <mat-form-field class="example-form-field">
-        <mat-label>Set Minutes </mat-label>
-        <input
-          matInput
-          type="number"
-          [(ngModel)]="minutesInput"
-          (input)="convertDuration($event)"
-          [disabled]="room.state && room.state !== 'STOPPED'"
-        />
-        @if (minutesInput) {
-        <button
-          matSuffix
-          matIconButton
-          aria-label="Clear"
-          (click)="minutesInput = 0"
-          [disabled]="room.state !== 'STOPPED' || !room.state"
-        >
-          <mat-icon>close</mat-icon>
-        </button>
-        }
-      </mat-form-field>
+    <div class="min-h-screen bg-gradient-to-br from-amber-50 to-amber-100 p-8">
+      <div class="max-w-lg mx-auto">
+        <div class="flex items-center mb-6">
+          <button mat-icon-button routerLink="/rooms" class="mr-2">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <h1 class="text-2xl font-bold text-amber-800">{{ room?.name }}</h1>
+        </div>
 
-      @if(room) { @if(room.state === "STOPPED" || !room.state) {
-      <button
-        mat-flat-button
-        class="bg-red-500"
-        (click)="start()"
-        [disabled]="duration == 0"
-      >
-        START
-      </button>
-      } @else if (room.state === "PAUSED") {
-      <button mat-flat-button (click)="resume()">RESUME</button>
-      } @else if (room.state === "RUNNING") {
-      <button mat-flat-button (click)="pause()">PAUSE</button>
-      <button mat-flat-button (click)="stop()">STOP</button>
-      } }
+        <div class="bg-white rounded-2xl shadow-xl p-8 text-center mb-6">
+          <!-- Timer Display -->
+          <div class="text-7xl font-mono font-bold text-amber-700 mb-4 tracking-wider">
+            {{ formattedTime }}
+          </div>
 
-      <!-- Modal to set duration. -->
+          @if(room?.state === 'RUNNING') {
+            <div class="flex justify-center gap-1 mb-4">
+              <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              <span class="text-sm text-green-600 font-medium">Running</span>
+            </div>
+          } @else if(room?.state === 'PAUSED') {
+            <div class="text-sm text-amber-600 font-medium mb-4">Paused</div>
+          } @else {
+            <div class="text-sm text-gray-500 mb-4">Stopped</div>
+          }
+
+          <!-- Admin Controls -->
+          <div *hasRole="'ROLE_ADMIN'" class="mt-6 border-t pt-6">
+            <div class="flex items-center justify-center gap-2 mb-4">
+              <mat-form-field class="!w-32" subscriptSizing="dynamic">
+                <mat-label>Minutes</mat-label>
+                <input matInput type="number" [(ngModel)]="minutesInput"
+                       (input)="convertDuration($event)" min="0"
+                       [disabled]="room.state && room.state !== 'STOPPED' && room.state !== 'PAUSED'" />
+              </mat-form-field>
+
+              @if(room.state === 'STOPPED' || !room.state) {
+                <button mat-fab color="primary" (click)="start()" [disabled]="duration === 0"
+                        class="!bg-green-500 hover:!bg-green-600">
+                  <mat-icon>play_arrow</mat-icon>
+                </button>
+              } @else if(room.state === 'PAUSED') {
+                <button mat-fab color="primary" (click)="resume()"
+                        class="!bg-green-500 hover:!bg-green-600">
+                  <mat-icon>play_arrow</mat-icon>
+                </button>
+              } @else if(room.state === 'RUNNING') {
+                <button mat-fab color="warn" (click)="pause()"
+                        class="!bg-amber-500 hover:!bg-amber-600">
+                  <mat-icon>pause</mat-icon>
+                </button>
+                <button mat-fab (click)="stop()" class="!bg-red-500 hover:!bg-red-600 !ml-2">
+                  <mat-icon>stop</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <!-- } -->
-    <!-- <pre> {{ room | json  }} </pre> -->
   `,
 })
 export class RoomComponent implements OnInit, OnDestroy {
@@ -258,7 +269,9 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   async end() {
-    this.subscription.unsubscribe();
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+    }
     this.stopLocalTimer();
     await this.rxStomp.deactivate();
   }

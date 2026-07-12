@@ -53,7 +53,7 @@ public class RoomsController {
         return this.roomRepoImpl.findById(roomId);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_ADMIN')")
     @PutMapping("/extend/{roomId}")
     public ResponseEntity<?> extend(@PathVariable UUID roomId, @RequestBody Long extendMinutes) {
         var currentRoom = this.roomRepoImpl.findById(roomId);
@@ -67,7 +67,7 @@ public class RoomsController {
         return ResponseEntity.badRequest().body(null);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('SCOPE_ROLE_ADMIN')")
     @PostMapping()
     public Room saveRoom(@RequestBody String roomName) {
         var newRoom = new Room(null, roomName, null, null, false);
@@ -132,7 +132,7 @@ public class RoomsController {
     }
 
     @MessageMapping("/timer.stopTimer/{roomId}")
-    // @SendTo("/topic/timer/status/{roomId}")
+    @SendTo("/topic/timer/status/{roomId}")
     public ResponseEntity<?> stopTimer(@DestinationVariable String roomId, RoomBooking booking) {
 
         var currentRoom = roomRepoImpl.findById(booking.roomId());

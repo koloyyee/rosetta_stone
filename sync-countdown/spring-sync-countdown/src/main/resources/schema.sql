@@ -17,11 +17,12 @@ create table IF NOT EXISTS authorities (
 create unique index IF NOT EXISTS ix_auth_username on authorities (username, authority);
 
 CREATE TABLE IF NOT EXISTS rooms (
-	id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-	name VARCHAR(100) NOT NULL UNIQUE,
-	start_time TIMESTAMP,
-	end_time TIMESTAMP,
-	is_timer_running BOOLEAN DEFAULT FALSE
+		id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+		name VARCHAR(100) NOT NULL UNIQUE,
+		owner VARCHAR(100) REFERENCES users(username),
+		start_time TIMESTAMP,
+		end_time TIMESTAMP,
+		is_timer_running BOOLEAN DEFAULT FALSE
 );
 
 -- Insert with conflict handling

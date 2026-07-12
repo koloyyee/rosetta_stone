@@ -58,7 +58,9 @@ public class SecurityConfig {
         return http
                 .csrf((csrf) -> csrf.ignoringRequestMatchers("/auth/token", "/auth/signup", "/h2-console/**", "/timer"))
                 .cors(Customizer.withDefaults())
-                .headers(headers -> headers.disable())
+                .headers(headers -> headers
+                        .frameOptions(f -> f.sameOrigin())
+                        .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; frame-ancestors 'self'")))
                 .authorizeHttpRequests(auth
                         -> auth
                         .requestMatchers("/h2-console/**", "/auth/signup", "/timer").permitAll()
@@ -93,29 +95,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    JdbcUserDetailsManager jdbcUserDetailsManager(DataSource dataSource) {
+    UserDetailsManager userDetailsManager(DataSource dataSource) {
         return new JdbcUserDetailsManager(dataSource);
-    }
-
-    // @Bean
-    UserDetailsManager users(DataSource dataSource, PasswordEncoder passwordEncoder) {
-        // default user
-
-        JdbcUserDetailsManager users = new JdbcUserDetailsManager(dataSource);
-
-        UserDetails user = User.builder()
-                .username("user@sync.room")
-                .password(passwordEncoder.encode("password"))
-                .roles("USER")
-                .build();
-        UserDetails admin = User.builder()
-                .username("admin@sync.room")
-                .password(passwordEncoder.encode("password"))
-                .roles("USER", "ADMIN")
-                .build();
-        users.createUser(user);
-        users.createUser(admin);
-        return users;
     }
 
     @Bean
