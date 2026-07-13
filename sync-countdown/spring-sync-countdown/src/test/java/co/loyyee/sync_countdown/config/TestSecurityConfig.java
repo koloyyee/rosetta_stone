@@ -1,0 +1,25 @@
+package co.loyyee.sync_countdown.config;
+
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+
+import java.time.Instant;
+
+@TestConfiguration
+public class TestSecurityConfig {
+
+    @Bean
+    @Primary
+    public JwtDecoder jwtDecoder() {
+        return token -> Jwt.withTokenValue("test-token")
+                .header("alg", "RS256")
+                .claim("sub", "test@user.com")
+                .claim("scope", "SCOPE_ROLE_USER")
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .build();
+    }
+}

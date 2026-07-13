@@ -9,14 +9,13 @@ import { MatInputModule } from '@angular/material/input';
 @Component({
   selector: 'app-set-duration-dialog',
   imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatButtonModule, ReactiveFormsModule],
-  styleUrl: './set-duration-dialog.component.scss',
   template:`
      <h2 mat-dialog-title>Create new room</h2>
       <mat-dialog-content>Create a new room countdown timer</mat-dialog-content>
       <form class="p-5 flex flex-col" [formGroup]="durationForm" (ngSubmit)="onSubmit()">
         <mat-form-field>
-          <mat-label> Room Name:</mat-label>
-          <input matInput formControlName="name">
+          <mat-label> Duration (minutes):</mat-label>
+          <input matInput formControlName="duration">
         </mat-form-field>
         <section class="btn-section flex justify-around" >
           <button mat-raised-button type="reset" class="reset-btn"> reset </button>

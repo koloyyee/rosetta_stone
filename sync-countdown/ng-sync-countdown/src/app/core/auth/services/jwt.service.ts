@@ -2,69 +2,71 @@ import { CurrentUser } from '@/app/core/models/current-user';
 import { Injectable } from '@angular/core';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class JwtService {
-
-  constructor() { }
+  constructor() {}
 
   set(token: string): void {
-    window.localStorage.setItem("jwt-token", token);
+    window.localStorage.setItem('jwt-token', token);
   }
 
   get(): string | null {
-    return window.localStorage.getItem("jwt-token");
+    return window.localStorage.getItem('jwt-token');
   }
 
   remove(): void {
-    window.localStorage.removeItem("jwt-token");
+    window.localStorage.removeItem('jwt-token');
   }
 
-  private expiry(): Date | null {
-    const token = this.get();
-    if (!token) {
-      return null;
+
+  /**
+   * Check either argument token or localStorage token is valid 
+   * @param token 
+   * @returns 
+   */
+  hasExpired(token?: string): boolean {
+    const jwt = token ? token : this.get();
+    if (!jwt) return true;
+    try {
+      const payload = this.decode(jwt);
+      if (!payload.exp)  return true;
+      return Date.now() >= payload.exp * 1000;
+    } catch {
+      return true;
     }
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    if (payload.exp) {
-      return new Date(payload.exp * 1000)
-    }
-    return null;
   }
 
-  hasExpired(): boolean {
-    const expiryDate = this.expiry();
-    return expiryDate ? expiryDate < new Date() : true;
-  }
-
-
-  decode(token: string | null ){
+  decode(token: string | null) {
     if (token) {
-      return JSON.parse(atob(token.split(".")[1]))
+      return JSON.parse(atob(token.split('.')[1]));
     }
     return null;
   }
 
   user(): CurrentUser | null {
-      const token = this.get();
-      if (!token) return null;
-      const payload = this.decode(token);
-      const user: CurrentUser = {
-        token,
-        username: payload.sub,
-        authorities: payload.scope.split(" ").map( ( a: string) => ({ authority : a }))
-      }
-      return user;
+    const token = this.get();
+    if (!token) return null;
+    const payload = this.decode(token);
+    const user: CurrentUser = {
+      token,
+      username: payload.sub,
+      authorities: payload.scope
+        .split(' ')
+        .map((a: string) => ({ authority: a })),
+    };
+    return user;
   }
 
-  userRoles() : {authority: string}[] {
-
+  userRoles(): { authority: string }[] {
     const token = this.get();
     if (token) {
-      const payload = JSON.parse(atob(token.split(".")[1]))
+      const payload = this.decode(token);
 
-      const auths = payload.scope.split(" ").map( (authority: string) => ({authority}));
-      console.log({auths})
+      const auths = payload.scope
+        .split(' ')
+        .map((authority: string) => ({ authority }));
+      console.log({ auths });
       return auths;
     }
     return [];

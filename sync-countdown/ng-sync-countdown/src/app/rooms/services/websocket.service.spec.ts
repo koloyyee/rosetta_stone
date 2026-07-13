@@ -1,13 +1,21 @@
 import { TestBed } from '@angular/core/testing';
+import { WebSocketService } from './websocket.service';
+import { JwtService } from '@/app/core/auth/services/jwt.service';
 
-import { WebsocketService } from './websocket.service';
-
-describe('WebsocketService', () => {
-  let service: WebsocketService;
+describe('WebSocketService', () => {
+  let service: WebSocketService;
+  let jwtSpy: jasmine.SpyObj<JwtService>;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(WebsocketService);
+    jwtSpy = jasmine.createSpyObj('JwtService', ['get']);
+
+    TestBed.configureTestingModule({
+      providers: [
+        WebSocketService,
+        { provide: JwtService, useValue: jwtSpy },
+      ]
+    });
+    service = TestBed.inject(WebSocketService);
   });
 
   it('should be created', () => {

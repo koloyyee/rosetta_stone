@@ -1,12 +1,15 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './login/login.component';
-import { SignupComponent } from './signup/signup.component';
+import { LoginComponent } from './auth/login/login.component';
+import { SignupComponent } from './auth/signup/signup.component';
+import { HomepageComponent } from './homepage/homepage.component';
+import { RoomsLayoutComponent } from './rooms/rooms-layout.component';
+import { AuthGuard } from './core/auth/services/auth-guard.service';
 
 export const routes: Routes = [
   {
     path: "",
-    redirectTo: "rooms",
-    pathMatch: "full"
+    component: HomepageComponent,
+    title: "Home"
   },
   {
     path: "login",
@@ -20,6 +23,8 @@ export const routes: Routes = [
   },
   {
     path: "rooms",
+    component: RoomsLayoutComponent,
+    canActivate: [AuthGuard],
     children: [
       {
         path: "",
@@ -33,5 +38,10 @@ export const routes: Routes = [
         title: "Room",
       }
     ]
+  },
+  {
+    path: "**",
+    title: "Not Found",
+    loadComponent: () => import("./not-found/not-found.component").then(m => m.NotFoundComponent),
   }
 ];

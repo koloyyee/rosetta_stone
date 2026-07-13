@@ -6,7 +6,7 @@ import { logger } from "../utils/helper";
 export function urlInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
   const apiUrl = environment.apiUrl + req.url;
   const apiReq = req.clone({ url: `${apiUrl}` })
-  console.log(apiUrl)
+  logger.info(apiUrl)
   return next(apiReq);
 }
 

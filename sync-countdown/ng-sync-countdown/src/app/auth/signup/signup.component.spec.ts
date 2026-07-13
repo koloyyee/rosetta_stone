@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SignupComponent } from './signup.component';
+import { AuthService } from '../../core/auth/services/auth.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('SignupComponent', () => {
   let component: SignupComponent;
@@ -8,7 +10,14 @@ describe('SignupComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SignupComponent]
+      imports: [SignupComponent],
+      providers: [
+        provideHttpClient(),
+        {
+          provide: AuthService,
+          useValue: jasmine.createSpyObj('AuthService', ['signup']),
+        }
+      ]
     })
     .compileComponents();
 

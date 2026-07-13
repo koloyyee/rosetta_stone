@@ -13,24 +13,36 @@ import { RoomsService } from '../services/rooms.service';
 @Component({
   selector: 'app-listing',
   imports: [CommonModule, AsyncPipe, RoomPreviewComponent, MatListModule, MatButtonModule, MatIconModule, MatDialogModule],
-  // styleUrl: './listing.component.css',
-  styles: `
-  `,
   template: `
-  <div class=" flex flex-col m-20">
-     @if(isAdmin$ | async) {
-     <button mat-fab (click)="openDialog()" class="mt-auto ml-auto">
-         <mat-icon>add</mat-icon>
-     </button>
-     }
-  <h1 class="text-xl border-b-blue-200 border-b-8 w-1/3"> Find your Room! </h1>
-  <mat-list role="list">
-     @for( room of rooms; track room.id) {
-       <mat-list-item role="list-item" class="border-b-2 border-slate-400 my-5 hover:shadow-md ">
-         <app-room-preview [room]="room" ></app-room-preview>
-       </mat-list-item>
-     }
-  </mat-list>
+  <div class="flex flex-col p-8 max-w-4xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-3xl font-bold text-amber-800">Browse Rooms</h1>
+      @if(isAdmin$ | async) {
+        <button mat-fab color="primary" (click)="openDialog()"
+                class="!bg-amber-500 hover:!bg-amber-600"
+                aria-label="Create new room">
+          <mat-icon>add</mat-icon>
+        </button>
+      }
+    </div>
+
+    @if(rooms.length === 0) {
+      <div class="text-center py-16 text-gray-500">
+        <mat-icon class="text-6xl !w-16 !h-16 mb-4">meeting_room</mat-icon>
+        <p class="text-xl">No rooms yet</p>
+        <p class="mt-2">Create the first room to get started</p>
+      </div>
+    }
+
+    <mat-list role="list">
+      @for(room of rooms; track room.id) {
+        <mat-list-item role="listitem"
+          class="mb-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow
+                 !bg-white overflow-hidden !h-auto !min-h-0 !p-0">
+          <app-room-preview [room]="room" />
+        </mat-list-item>
+      }
+    </mat-list>
   </div>
   `,
 })
@@ -69,4 +81,3 @@ export class ListingComponent implements OnInit {
     // this.roomsService.save(room);
   }
 }
-

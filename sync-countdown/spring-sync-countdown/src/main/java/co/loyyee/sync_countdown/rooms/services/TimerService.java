@@ -62,11 +62,10 @@ public class TimerService {
 
     public void resume(String roomId) {
         var timer = timers.get(roomId);
-        if (timer != null && timer.state != TimerState.RUNNING) {
-            // Note: create a new temp now for resetting the start time
-            // offset by - 1 because the milliseconds differences will cause it round down missing a second.
-            var newStartTime = now().minusSeconds((timer.duration - timer.remaining) - 1);
-            timer.startTime = newStartTime;
+        if (timer != null && timer.state == TimerState.PAUSED) {
+            // Recompute startTime from elapsed time to avoid drift
+            var elapsed = timer.duration - timer.remaining;
+            timer.startTime = now().minusSeconds(elapsed);
             timer.state = TimerState.RUNNING;
         }
         sendRemainingTime(roomId);
@@ -74,19 +73,21 @@ public class TimerService {
 
     public void stop(String roomId) {
         var timer = timers.get(roomId);
-        if (timer != null && timer.state == TimerState.RUNNING) {
+        if (timer != null && (timer.state == TimerState.RUNNING || timer.state == TimerState.PAUSED)) {
             timer.state = TimerState.STOPPED;
             timer.startTime = null;
             timer.duration = 0;
             timer.remaining = 0;
+            timers.remove(roomId);
+            persistBooking(roomId, null, now());
         }
         sendRemainingTime(roomId);
     }
 
-    public void extend(String roomId, long duration) {
+    public void extend(String roomId, long additionalSeconds) {
         var timer = timers.get(roomId);
-        if (timer != null) {
-            timer.duration = duration;
+        if (timer != null && timer.state == TimerState.RUNNING) {
+            timer.duration += additionalSeconds;
         }
         sendRemainingTime(roomId);
     }
@@ -111,36 +112,40 @@ public class TimerService {
             case TimerState.RUNNING -> {
                 long remaining = Math.max(0, Duration.between(now(), startTime.plusSeconds(duration)).getSeconds());
                 logger.info("Remaining seconds :" + remaining);
-                if (remaining >= 0) {
-                    response.put("remaining", remaining);
-                    template.convertAndSend(roomRemainingTopic, response);
-                } else {
+                response.put("remaining", remaining);
+                template.convertAndSend(roomRemainingTopic, response);
+                if (remaining <= 0) {
                     timer.state = TimerState.FINISHED;
-                    template.convertAndSend(roomRemainingTopic, response);
+                    timers.remove(roomId);
+                    persistBooking(roomId, startTime, now());
                 }
             }
-            // When timer state is STOPPED or FINISHED, it will be recorded in database.
             case TimerState.FINISHED, TimerState.STOPPED -> {
                 template.convertAndSend(roomRemainingTopic, response);
-                BookingRecord newRecord = new BookingRecord(null, UUID.fromString(roomId), startTime, now());
-                bookingRecordsRepository.save(newRecord);
             }
             case TimerState.PAUSED -> {
                 response.put("remaining", Math.max(0L, timer.remaining));
                 template.convertAndSend(roomRemainingTopic, response);
             }
         }
-
     }
 
     @Scheduled(fixedRate = 1000)
     public void scheduleRemainingTime() {
-        for (var room : timers.entrySet()) {
-            var roomId = room.getKey();
-            var timer = room.getValue();
-            if (timer.state == TimerState.RUNNING || timer.state == TimerState.STOPPED) {
-                sendRemainingTime(roomId);
+        for (var entry : timers.entrySet()) {
+            if (entry.getValue().state == TimerState.RUNNING) {
+                sendRemainingTime(entry.getKey());
             }
+        }
+    }
+
+    private void persistBooking(String roomId, LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            BookingRecord newRecord = new BookingRecord(null, UUID.fromString(roomId), startTime, endTime);
+            bookingRecordsRepository.save(newRecord);
+            logger.info("Saved booking record for room {}", roomId);
+        } catch (Exception e) {
+            logger.error("Failed to persist booking record for room {}", roomId, e);
         }
     }
 
