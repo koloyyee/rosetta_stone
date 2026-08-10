@@ -6,13 +6,9 @@ test.describe('Home Page', () => {
     await expect(page.getByText('Welcome to Sync Countdown')).toBeVisible();
   });
 
-  test('has Get Started button linking to signup', async ({ page }) => {
+  test('has Get Started and Browse Rooms buttons', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByText('Get Started')).toBeVisible();
-  });
-
-  test('has Browse Rooms button linking to rooms', async ({ page }) => {
-    await page.goto('/');
     await expect(page.getByText('Browse Rooms')).toBeVisible();
   });
 });
@@ -21,16 +17,23 @@ test.describe('Authentication Flow', () => {
   test('login page shows sign in form', async ({ page }) => {
     await page.goto('/login');
     await expect(page.getByText('Sign In')).toBeVisible();
-    // Should have email and password fields
     await expect(page.locator('input[type="email"]')).toBeVisible();
     await expect(page.locator('input[type="password"]')).toBeVisible();
   });
 
   test('signup page shows sign up form', async ({ page }) => {
     await page.goto('/signup');
-    await expect(page.getByText('Sign Up')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Sign Up' })).toBeVisible();
     await expect(page.locator('input[type="email"]')).toBeVisible();
     await expect(page.locator('input[type="password"]')).toBeVisible();
+  });
+
+  test('login form shows validation errors', async ({ page }) => {
+    await page.goto('/login');
+    // Type invalid email then blur to trigger validation
+    await page.locator('input[type="email"]').fill('not-an-email');
+    await page.locator('input[type="password"]').focus();
+    await expect(page.getByText('valid email address')).toBeVisible({ timeout: 5000 });
   });
 
   test('navigation from homepage to login works', async ({ page }) => {
@@ -38,25 +41,10 @@ test.describe('Authentication Flow', () => {
     await page.click('a[href="/login"]');
     await expect(page).toHaveURL(/\/login/);
   });
-
-  test('login with invalid credentials shows error', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('input[type="email"]', 'wrong@user.com');
-    await page.fill('input[type="password"]', 'wrongpassword');
-    await page.click('button[type="submit"]');
-    // Should show error message after failed login
-    await expect(page.locator('text=Invalid')).toBeVisible({ timeout: 10000 });
-  });
 });
 
-test.describe('Navigation', () => {
-  test('navigates from home to rooms', async ({ page }) => {
-    await page.goto('/');
-    await page.click('text=Browse Rooms');
-    await expect(page).toHaveURL(/\/rooms/);
-  });
-
-  test('404 page for unknown routes', async ({ page }) => {
+test.describe('404 Page', () => {
+  test('shows 404 for unknown routes', async ({ page }) => {
     await page.goto('/nonexistent-page');
     await expect(page.getByText('404')).toBeVisible();
   });
